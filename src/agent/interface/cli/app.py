@@ -8,6 +8,7 @@ from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.keys import Keys
 from rich.console import Console
 
+from agent.domain.aggregate.implementation_plan import ImplementationPlan
 from agent.domain.vo.prompt import Prompt
 
 EXIT_COMMAND = ".exit"
@@ -57,28 +58,18 @@ def user_prompt(session: PromptSession[str]) -> tuple[bool, str]:
     return False, prompt
 
 
-def display_plan(plan: object, console: Console) -> None:
+def display_plan(plan: ImplementationPlan, console: Console) -> None:
     """Present a generated plan without changing domain state."""
     console.print("\n[bold green]Plan generated successfully.[/bold green]")
-    plan_id = getattr(plan, "id", None)
-    status = getattr(plan, "status", None)
-    steps = getattr(plan, "steps", ())
-
-    if plan_id is not None:
-        console.print(f"Plan ID: {getattr(plan_id, 'value', plan_id)}")
-
-    if status is not None:
-        console.print(f"Status: {getattr(status, 'value', status)}")
-
+    console.print(f"Plan ID: {plan.id.value}")
+    console.print(f"Status: {plan.status.value}")
     console.print("\n[bold]Implementation steps[/bold]")
 
-    for step in steps:
-        console.print(f"  {step.sequence}. {step.description}")
-
-    console.print()
+    for step in plan.steps:
+        console.print(f"  {step.sequence}. {step.title}\n  {step.description}")
 
 
-def run_cli(process_prompt: Callable[[Prompt], object]) -> None:
+def run_cli(process_prompt: Callable[[Prompt], ImplementationPlan]) -> None:
     console = Console()
     session = create_prompt_session()
     console.print(PROMPT_INSTRUCTIONS, style="cyan")
@@ -107,5 +98,4 @@ def run_cli(process_prompt: Callable[[Prompt], object]) -> None:
                 console.print("[dim]Check the application logs for details.[/dim]\n")
 
     except KeyboardInterrupt:
-        # Graceful shutdown without a traceback.
         pass

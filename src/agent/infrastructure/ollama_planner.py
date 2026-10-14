@@ -1,33 +1,14 @@
 import json
 import os
-
 from ollama import Client
-
+from agent.application.port.planner import Planner
 from agent.domain.vo.plan_proposal import PlanProposal, ProposedPlanStep
 from agent.domain.vo.prompt import Prompt
-
-SCHEMA = {
-    "type": "object",
-    "properties": {
-        "steps": {
-            "type": "array",
-            "minItems": 1,
-            "items": {
-                "type": "object",
-                "properties": {
-                    "description": {"type": "string"}
-                },
-                "required": ["description"],
-                "additionalProperties": False,
-            },
-        }
-    },
-    "required": ["steps"],
-    "additionalProperties": False,
-}
+from agent.infrastructure.prompt import PLAN_PROMPT
+from agent.infrastructure.schema import PLAN_SCHEMA
 
 
-class OllamaPlanner:
+class OllamaPlanner(Planner):
     """Infrastructure adapter implementing the Planner application port."""
 
     def __init__(self, base_url: str | None = None, model: str | None = None, timeout: float = 120.0) -> None:
@@ -39,22 +20,17 @@ class OllamaPlanner:
 
     def generate_plan(self, prompt: Prompt) -> PlanProposal:
         message = [
-            {
-                "role": "system",
-                "content": (
-                    "You are a senior backend engineering planner. "
-                    "Create a concise, ordered implementation plan "
-                    "based on the user's request. Inspecting a project, "
-                    "implementation, and verification should be included "
-                    "when relevant. Return only the requested JSON "
-                    "structure. Do not claim that work has been executed."
-                ),
-            },
+            {"role": "system", "content": PLAN_PROMPT, },
             {"role": "user", "content": prompt.value},
         ]
 
         try:
-            response = self._client.chat(model=self._model, messages=message, format=SCHEMA, options={"temperature": 0})
+            response = self._client.chat(
+                model=self._model,
+                messages=message,
+                format=PLAN_SCHEMA,
+                options={"temperature": 0}
+            )
             content = response.message["content"]
             data = json.loads(content)
             raw_steps = data["steps"]
@@ -68,10 +44,12 @@ class OllamaPlanner:
                     raise ValueError("Each step must be an object")
 
                 description = item.get("description")
-                if not isinstance(description, str) or not description.strip():
-                    raise ValueError("Step descriptions cannot be empty")
+                title = item.get("title")
+                if (not isinstance(description, str) or not description.strip()
+                        or not isinstance(title, str) or not title.strip()):
+                    raise ValueError("Step descriptions and title cannot be empty")
 
-                steps.append(ProposedPlanStep(description=description.strip()))
+                steps.append(ProposedPlanStep(description=description.strip(), title=title.strip()))
 
             return PlanProposal(steps=tuple(steps))
 

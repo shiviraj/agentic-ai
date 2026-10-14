@@ -13,8 +13,8 @@ class CreatePlan:
         proposal = self._planner.generate_plan(prompt)
 
         steps = [
-            PlanStep.create(description=proposed_step.description, sequence=index)
-            for index, proposed_step in enumerate(proposal.steps, start=1)
+            PlanStep.create(title=step.title, description=step.description, sequence=index)
+            for index, step in enumerate(proposal.steps, start=1)
         ]
 
         return ImplementationPlan.create(task_id=task_id, steps=steps)

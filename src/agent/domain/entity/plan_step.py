@@ -1,11 +1,12 @@
 from dataclasses import dataclass
-from uuid import UUID, uuid4
 
+from agent.domain.vo.step_id import StepId
 from agent.shared.domain.entity import Entity
 
 
 @dataclass(eq=False)
-class PlanStep(Entity[UUID]):
+class PlanStep(Entity[StepId]):
+    title: str
     description: str
     sequence: int
 
@@ -17,5 +18,5 @@ class PlanStep(Entity[UUID]):
             raise ValueError("Plan step sequence must start at 1")
 
     @classmethod
-    def create(cls, description: str, sequence: int, ) -> "PlanStep":
-        return cls(id=uuid4(), description=description, sequence=sequence)
+    def create(cls, title: str, description: str, sequence: int) -> "PlanStep":
+        return cls(id=StepId.generate(), title=title, description=description, sequence=sequence)
