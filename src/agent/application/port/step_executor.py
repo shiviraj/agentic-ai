@@ -1,8 +1,6 @@
-from typing import Protocol
-
 from agent.domain.entity.plan_step import PlanStep
 
 
-class StepExecutor(Protocol):
+class StepExecutor:
     def execute(self, step: PlanStep) -> None:
         ...

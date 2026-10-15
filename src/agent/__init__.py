@@ -1,3 +1,7 @@
+import os
+from pathlib import Path
+
+from ollama import Client
 from rich.console import Console
 
 from agent.application.port import step_executor
@@ -7,16 +11,19 @@ from agent.application.services.plan_executor import PlanExecutor
 from agent.domain.aggregate.implementation_plan import ImplementationPlan
 from agent.domain.vo.prompt import Prompt
 from agent.domain.vo.task_id import TaskId
+from agent.infrastructure.create_tool_registry import create_tool_registry
 from agent.infrastructure.ollama_planner import OllamaPlanner
-from agent.infrastructure.unavailable_step_executor import UnavailableStepExecutor
+from agent.infrastructure.tool_step_executor import ToolStepExecutor
 from agent.interface.cli.app import run_cli
 from agent.interface.cli.approval import CliStepApproval
 
 
 def main() -> None:
-    create_plan = CreatePlan(planner=(OllamaPlanner()))
-    plan_executor = PlanExecutor(
-        step_executor=UnavailableStepExecutor(),
+    client = Client(host=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"), timeout=120)
+    model = os.getenv("OLLAMA_MODEL", "llama3.2:latest")
+    create_plan = CreatePlan(planner=(OllamaPlanner(client, model=model)))
+    executor = PlanExecutor(
+        step_executor=ToolStepExecutor(client, model, create_tool_registry(Path('workspace'))),
         step_approval=CliStepApproval(console=Console())
     )
 
@@ -24,6 +31,6 @@ def main() -> None:
         return create_plan.execute(TaskId.generate(), prompt)
 
     def execute_plan(plan: ImplementationPlan) -> None:
-        plan_executor.execute(plan)
+        executor.execute(plan)
 
     run_cli(process_prompt, execute_plan)
