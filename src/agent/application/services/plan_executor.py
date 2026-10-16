@@ -13,4 +13,5 @@ class PlanExecutor:
         for step in plan.steps:
             if not self._step_approval.approve(step):
                 return
-            self._step_executor.execute(step)
+            step_result = self._step_executor.execute(step)
+            print(step_result)

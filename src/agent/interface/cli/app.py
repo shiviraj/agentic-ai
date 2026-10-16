@@ -26,8 +26,7 @@ def process_user_request(
         execute_plan: Callable[[ImplementationPlan], None],
         console: Console,
 ) -> None:
-    with console.status("[cyan]Generating implementation plan...[/cyan]", spinner="dots", ):
-        plan = process_prompt(prompt)
+    plan = process_prompt(prompt)
     display_plan(plan, console)
     execute_plan_with_feedback(plan, execute_plan, console)
 

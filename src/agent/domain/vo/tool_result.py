@@ -3,5 +3,6 @@ from dataclasses import dataclass
 
 @dataclass
 class ToolResult:
-    status: bool
-    content: str
+    success: bool
+    data: dict[str, object] | None = None
+    error: str | None = None

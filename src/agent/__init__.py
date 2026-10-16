@@ -1,9 +1,8 @@
+import contextlib
 import os
 from pathlib import Path
-
 from ollama import Client
 from rich.console import Console
-
 from agent.application.port import step_executor
 from agent.application.services import plan_executor
 from agent.application.services.create_plan import CreatePlan
@@ -21,10 +20,13 @@ from agent.interface.cli.approval import CliStepApproval
 def main() -> None:
     client = Client(host=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"), timeout=120)
     model = os.getenv("OLLAMA_MODEL", "llama3.2:latest")
-    create_plan = CreatePlan(planner=(OllamaPlanner(client, model=model)))
+    console = Console()
+    registry = create_tool_registry(Path('workspace'))
+
+    create_plan = CreatePlan(planner=(OllamaPlanner(client, model=model, tool_registry=registry, console=console)))
     executor = PlanExecutor(
-        step_executor=ToolStepExecutor(client, model, create_tool_registry(Path('workspace'))),
-        step_approval=CliStepApproval(console=Console())
+        step_executor=ToolStepExecutor(client, model, registry, console),
+        step_approval=CliStepApproval(console=console)
     )
 
     def process_prompt(prompt: Prompt):
