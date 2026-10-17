@@ -47,7 +47,7 @@ class ToolStepExecutor(StepExecutor):
                 for tool_call in tool_calls:
                     tool_name = tool_call.function["name"]
                     arguments = tool_call.function["arguments"] or {}
-                    tool_result = self._tool_registry.get(tool_name).execute(arguments)
+                    tool_result = self._tool_registry.execute(tool_name, arguments)
                     messages.append({"role": "tool", "tool_name": tool_name, "content": str(tool_result)})
         except Exception as exc:
             return {

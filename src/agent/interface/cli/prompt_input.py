@@ -3,6 +3,8 @@ from prompt_toolkit.history import FileHistory
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.keys import Keys
 
+from agent.domain.vo.prompt import Prompt
+
 EXIT_COMMAND = ".exit"
 GOODBYE = "Goodbye!!"
 
@@ -27,12 +29,11 @@ def create_prompt_session() -> PromptSession[str]:
     return PromptSession(multiline=True, key_bindings=create_key_bindings(), history=FileHistory(".agent_history"))
 
 
-def user_prompt(session: PromptSession[str]) -> tuple[bool, str]:
+def user_prompt(session: PromptSession[str]) -> tuple[bool, Prompt]:
     try:
         text = session.prompt("> ")
     except (KeyboardInterrupt, EOFError):
-        return True, GOODBYE
-    prompt = text.strip()
-    if prompt == EXIT_COMMAND:
-        return True, GOODBYE
-    return False, prompt
+        return True, Prompt(GOODBYE)
+    if text.strip() == EXIT_COMMAND:
+        return True, Prompt(GOODBYE)
+    return False, Prompt(text.strip())

@@ -1,11 +1,15 @@
-from typing import Protocol
-
-from agent.domain.vo.plan_proposal import PlanProposal
+from agent.domain.vo.plan_proposal import RequirementAnalysisResult, ProposedPlanStep
 from agent.domain.vo.prompt import Prompt
 
 
-class Planner(Protocol):
+class Planner:
     """Application port for generating implementation plans."""
 
-    def generate_plan(self, prompt: Prompt) -> PlanProposal:
+    def analyze_requirement(self, prompt: Prompt) -> RequirementAnalysisResult:
+        ...
+
+    def discover_context(self, analysis_result: RequirementAnalysisResult, prompt: Prompt) -> str | None:
+        ...
+
+    def create_proposal(self, context: str, prompt: Prompt) -> list[ProposedPlanStep]:
         ...

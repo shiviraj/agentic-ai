@@ -30,30 +30,3 @@ def process_user_request(
     display_plan(plan, console)
     execute_plan_with_feedback(plan, execute_plan, console)
 
-
-def run_cli(
-        process_prompt: Callable[[Prompt], ImplementationPlan],
-        execute_plan: Callable[[ImplementationPlan], None],
-) -> None:
-    console = Console()
-    session: PromptSession[str] = create_prompt_session()
-    console.print(PROMPT_INSTRUCTIONS, style="cyan")
-
-    try:
-        while True:
-            should_exit, prompt = user_prompt(session)
-            if should_exit:
-                console.print(GOODBYE, style="dim")
-                break
-            if not prompt:
-                continue
-            try:
-                process_user_request(Prompt(prompt), process_prompt, execute_plan, console)
-            except KeyboardInterrupt:
-                console.print("\n[yellow]Request interrupted.[/yellow]\n")
-            except Exception:
-                console.print("\n[bold red]Failed to process the request.[/bold red]")
-                console.print("[dim]Check the application logs for details.[/dim]\n")
-
-    except KeyboardInterrupt:
-        pass

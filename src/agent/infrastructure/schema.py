@@ -1,7 +1,7 @@
 ANALYSIS_SCHEMA = {
     "type": "object",
     "properties": {
-        "requires_context": {
+        "require_context": {
             "type": "boolean",
             "description": "Whether understanding the existing project is necessary to create a correct implementation "
                            "plan.",
@@ -12,7 +12,7 @@ ANALYSIS_SCHEMA = {
                            "required."
         },
     },
-    "required": ["requires_context", "context_request"],
+    "required": ["require_context", "context_request"],
     "additionalProperties": False,
 }
 
@@ -28,7 +28,7 @@ PLAN_SCHEMA = {
                     "title": {"type": "string"},
                     "description": {"type": "string"}
                 },
-                "required": ["description"],
+                "required": ["description", "title"],
                 "additionalProperties": False,
             },
         }

@@ -8,5 +8,6 @@ class ProposedPlanStep:
 
 
 @dataclass(frozen=True)
-class PlanProposal:
-    steps: tuple[ProposedPlanStep, ...]
+class RequirementAnalysisResult:
+    require_context: bool
+    context_request: str
