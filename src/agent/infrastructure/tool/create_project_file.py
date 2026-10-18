@@ -1,53 +1,68 @@
 from pathlib import Path
-from typing import cast
+from typing import TypedDict
 
+from agent.application.tool.tool import Tool, ArgsT
 from agent.domain.vo.tool_result import ToolResult
-from agent.infrastructure.tool.tool import Tool
+from agent.domain.vo.tool_risk import ToolRisk
 from agent.infrastructure.tool.util import MAX_FILE_SIZE_BYTES
 
 
-class CreateProjectFile(Tool):
-    """Read a UTF-8 text file from the project workspace."""
-    name: str = "create_project_file"
-    description: str = "Create a new UTF-8 text file inside the project workspace. The parent directory must already " \
-                       "exist. Never overwrites an existing file. Use only for creating new files."
-    parameters_schema: dict[str, object] = {
-        "type": "object",
-        "properties": {
-            "filename": {
-                "type": "string",
-                "description": "Workspace-relative path of the new file, such as src/app.ts.",
-                "minLength": 1,
+class CreateProjectFileArgs(TypedDict):
+    filename: str
+    content: str
+
+
+class CreateProjectFile(Tool[CreateProjectFileArgs]):
+
+    @property
+    def name(self) -> str:
+        return "create_project"
+
+    @property
+    def display_name(self) -> str:
+        return "Create a new project file"
+
+    @property
+    def description(self) -> str:
+        return "Create a new UTF-8 text file inside the project workspace. The parent directory must already " \
+               "exist. Never overwrites an existing file. Use only for creating new files."
+
+    @property
+    def tool_risk(self) -> ToolRisk:
+        return ToolRisk.MUTATING
+
+    @property
+    def parameters_schema(self) -> dict[str, object]:
+        return {
+            "type": "object",
+            "properties": {
+                "filename": {
+                    "type": "string",
+                    "description": "Workspace-relative path of the new file, such as src/app.ts.",
+                    "minLength": 1,
+                },
+                "content": {
+                    "type": "string",
+                    "description": "Complete text content for the new file.",
+                },
             },
-            "content": {
-                "type": "string",
-                "description": "Complete text content for the new file.",
-            },
-        },
-        "required": ["filename", "content"],
-        "additionalProperties": False,
-    }
+            "required": ["filename", "content"],
+            "additionalProperties": False,
+        }
 
     def __init__(self, workspace_root: Path):
         self.workspace_root = workspace_root.resolve()
 
-    def execute(self, arguments: dict[str, object]) -> ToolResult:
-        filename: str = cast(str, arguments["filename"])
-        content: str = cast(str, arguments["content"])
+    def display_arguments(self, arguments: ArgsT) -> str | None:
+        return f"Filename: {arguments['filename']}"
 
-        if not filename.strip():
-            return ToolResult(success=False, error="Filename must not be empty.")
-
-        if not isinstance(content, str):
-            return ToolResult(success=False, error="File content must be a string.")
-
+    def execute(self, arguments: CreateProjectFileArgs) -> ToolResult:
+        filename = arguments["filename"]
+        content = arguments["content"]
         content_size = len(content.encode("utf-8"))
 
         if content_size > MAX_FILE_SIZE_BYTES:
-            return ToolResult(
-                success=False,
-                error=f"File content exceeds the {MAX_FILE_SIZE_BYTES}-byte limit."
-            )
+            return ToolResult(success=False, error=f"File content exceeds the {MAX_FILE_SIZE_BYTES}-byte limit.")
 
         requested_path = (self.workspace_root / filename).resolve()
 

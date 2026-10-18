@@ -1,23 +1,43 @@
 from pathlib import Path
 
 from agent.domain.vo.tool_result import ToolResult
-from agent.infrastructure.tool.tool import Tool
+from agent.application.tool.tool import Tool
+from agent.domain.vo.tool_risk import ToolRisk
 from agent.infrastructure.tool.util import IGNORED_DIRECTORIES
 
 
 class ListProjectFiles(Tool):
-    name: str = "list_project_files"
-    description: str = "List project files recursively using paths relative to the project root. Excludes hidden and " \
-                       "generated directories. This tool is read-only."
-    parameters_schema = {
+    @property
+    def display_name(self) -> str:
+        return "List project files"
+
+    @property
+    def name(self) -> str:
+        return "list_project_files"
+
+    @property
+    def description(self) -> str:
+        return "List project files recursively using paths relative to the project root. Excludes hidden and " \
+               "generated directories. This tool is read-only."
+
+    @property
+    def tool_risk(self) -> ToolRisk:
+        return ToolRisk.READ_ONLY
+
+    @property
+    def parameters_schema(self) -> dict[str, object]:
+        return {
         "type": "object",
-        "properties": {},
-        "required": [],
-        "additionalProperties": False
-    }
+            "properties": {},
+            "required": [],
+            "additionalProperties": False
+        }
 
     def __init__(self, workspace_root: Path):
         self.workspace_root = workspace_root.resolve()
+
+    def display_arguments(self, arguments: dict[str, object]) -> str | None:
+        return None
 
     def execute(self, arguments: dict[str, object]) -> ToolResult:
         files: list[str] = []

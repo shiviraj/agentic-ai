@@ -1,23 +1,20 @@
-import contextlib
 import os
 from pathlib import Path
 from ollama import Client
 from prompt_toolkit import PromptSession
 from rich.console import Console
-from agent.application.port import step_executor
-from agent.application.services import plan_executor
 from agent.application.services.create_plan import CreatePlan
-from agent.application.services.plan_executor import PlanExecutor
-from agent.application.workflow.progress_prompt import ProcessPromptWorkflow
-from agent.domain.aggregate.implementation_plan import ImplementationPlan
-from agent.domain.vo.prompt import Prompt
-from agent.domain.vo.task_id import TaskId
+from agent.application.services.execute_plan import ExecutePlan
+from agent.application.services.tool_executor import ToolExecutor
+from agent.application.workflow.progress_prompt_workflow import ProcessPromptWorkflow
+from agent.domain.policy.tool_approval_policy import ToolApprovalPolicy
+from agent.infrastructure.cli_approval_gateway import CliApprovalGateway
 from agent.infrastructure.create_tool_registry import create_tool_registry
 from agent.infrastructure.ollama_planner import OllamaPlanner
 from agent.infrastructure.tool_step_executor import ToolStepExecutor
 from agent.interface.cli.app import PROMPT_INSTRUCTIONS
-from agent.interface.cli.approval import CliStepApproval
-from agent.interface.cli.plan_display import display_plan
+from agent.interface.cli.display_plan import display_plan, display_tool_execution, display_tool_result, \
+    display_step_executing
 from agent.interface.cli.prompt_input import create_prompt_session, user_prompt
 
 
@@ -27,14 +24,22 @@ def main() -> None:
     console = Console()
     registry = create_tool_registry(Path('workspace'))
 
-    planner = OllamaPlanner(client, model=model, tool_registry=registry, console=console)
-    create_plan = CreatePlan(planner=planner, display_plan=display_plan)
-    workflow = ProcessPromptWorkflow(create_plan=create_plan)
-
-    executor = PlanExecutor(
-        step_executor=ToolStepExecutor(client, model, registry, console),
-        step_approval=CliStepApproval(console=console)
+    tool_executor = ToolExecutor(
+        ToolApprovalPolicy(),
+        CliApprovalGateway(console),
+        display_tool_execution=display_tool_execution,
+        display_tool_result=display_tool_result
     )
+    planner = OllamaPlanner(client, model=model, tool_registry=registry, console=console)
+    step_executor = ToolStepExecutor(client, model, registry, console)
+
+    create_plan = CreatePlan(planner=planner, display_plan=display_plan, tool_executor=tool_executor)
+    execute_plan = ExecutePlan(
+        step_executor=step_executor,
+        tool_executor=tool_executor,
+        display_step_executing=display_step_executing
+    )
+    workflow = ProcessPromptWorkflow(create_plan=create_plan, execute_plan=execute_plan)
 
     session: PromptSession[str] = create_prompt_session()
     console.print(PROMPT_INSTRUCTIONS, style="cyan")

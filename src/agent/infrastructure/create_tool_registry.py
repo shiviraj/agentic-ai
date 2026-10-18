@@ -21,6 +21,5 @@ def create_tool_registry(workspace_root: Path) -> ToolRegistry:
             ListProjectFiles(workspace_root),
             ReadProjectFile(workspace_root),
             SearchProject(workspace_root),
-
         ]
     )

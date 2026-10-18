@@ -1,5 +1,4 @@
-from agent.domain.vo.tool_result import ToolResult
-from agent.infrastructure.tool.tool import Tool
+from agent.application.tool.tool import Tool
 
 
 class ToolRegistry:
@@ -9,12 +8,7 @@ class ToolRegistry:
             if tool.name in self._tools:
                 raise ValueError(f"Duplicate tool name: {tool.name}")
             self._tools[tool.name] = tool
-
-    def execute(self, name: str, arguments: dict[str, object]) -> ToolResult:
-        return self._tools[name].execute(arguments)
-
-    def get_tools_definition(self) -> list[dict[str, object]]:
-        return [
+        self._tools_definition: list[dict[str, object]] = [
             {
                 "type": "function",
                 "function": {
@@ -25,3 +19,10 @@ class ToolRegistry:
             }
             for tool in self._tools.values()
         ]
+
+    @property
+    def tools_definition(self):
+        return self._tools_definition
+
+    def get_tool(self, tool_name: str) -> Tool:
+        return self._tools[tool_name]

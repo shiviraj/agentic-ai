@@ -1,60 +1,76 @@
 from pathlib import Path
-from typing import cast
+from typing import TypedDict
 
 from agent.domain.vo.tool_result import ToolResult
-from agent.infrastructure.tool.tool import Tool
+from agent.application.tool.tool import Tool
+from agent.domain.vo.tool_risk import ToolRisk
 from agent.infrastructure.tool.util import MAX_FILE_SIZE_BYTES, IGNORED_DIRECTORIES
 
 
-class SearchProject(Tool):
+class SearchProjectArgs(TypedDict):
+    query: str
+    file_pattern: str
+    max_results: int
+
+
+class SearchProject(Tool[SearchProjectArgs]):
     """Read a UTF-8 text file from the project workspace."""
-    name: str = "search_project"
-    description: str = "Search project text files for a case-insensitive query. Returns matching file paths, line " \
-                       "numbers, and line content. Read-only; does not modify files."
-    parameters_schema: dict[str, object] = {
-        "type": "object",
-        "properties": {
-            "query": {
-                "type": "string",
-                "description": "Text to search for.",
-                "minLength": 1,
+
+    @property
+    def display_name(self) -> str:
+        return "Search project text"
+
+    @property
+    def name(self) -> str:
+        return "search_project"
+
+    @property
+    def description(self) -> str:
+        return "Search project text files for a case-insensitive query. Returns matching file paths, line " \
+               "numbers, and line content. Read-only; does not modify files."
+
+    @property
+    def tool_risk(self) -> ToolRisk:
+        return ToolRisk.READ_ONLY
+
+    @property
+    def parameters_schema(self) -> dict[str, object]:
+        return {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "Text to search for.",
+                    "minLength": 1,
+                },
+                "file_pattern": {
+                    "type": "string",
+                    "description": (
+                        "Glob pattern for filenames, such as *.py or *.ts."
+                    ),
+                    "default": "*",
+                },
+                "max_results": {
+                    "type": "integer",
+                    "description": "Maximum number of matching lines to return.",
+                    "minimum": 1,
+                    "default": 100,
+                },
             },
-            "file_pattern": {
-                "type": "string",
-                "description": (
-                    "Glob pattern for filenames, such as *.py or *.ts."
-                ),
-                "default": "*",
-            },
-            "max_results": {
-                "type": "integer",
-                "description": "Maximum number of matching lines to return.",
-                "minimum": 1,
-                "default": 100,
-            },
-        },
-        "required": ["query"],
-        "additionalProperties": False,
-    }
+            "required": ["query", "file_pattern", "max_results"],
+            "additionalProperties": False,
+        }
 
     def __init__(self, workspace_root: Path):
         self.workspace_root = workspace_root.resolve()
 
-    def execute(self, arguments: dict[str, object]) -> ToolResult:
-        query: str = cast(str, arguments["query"])
-        file_pattern: str = cast(str, arguments["file_pattern"]) or "*"
-        max_results: int = cast(int, arguments["max_results"]) or 100
-        if not query.strip():
-            return ToolResult(success=False, error=ValueError("Search query must not be empty."))
+    def display_arguments(self, arguments: SearchProjectArgs) -> str | None:
+        return f"Query: {arguments['query']}, file_pattern: {arguments['file_pattern']}, max_results: {arguments['max_results']}"
 
-        if max_results < 1:
-            return ToolResult(success=False, error=ValueError("max_results must be greater than zero."))
-
-        if not self.workspace_root.is_dir():
-            return ToolResult(
-                success=False,
-                error=NotADirectoryError(f"Project workspace is not a directory: {self.workspace_root}")
-            )
+    def execute(self, arguments: SearchProjectArgs) -> ToolResult:
+        query = arguments["query"]
+        file_pattern = arguments["file_pattern"]
+        max_results = arguments["max_results"]
 
         matches: list[dict[str, object]] = []
         files_scanned = 0

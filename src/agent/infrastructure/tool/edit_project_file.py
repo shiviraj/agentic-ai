@@ -1,53 +1,70 @@
 from pathlib import Path
-from typing import cast
+from typing import cast, TypedDict
 
 from agent.domain.vo.tool_result import ToolResult
-from agent.infrastructure.tool.tool import Tool
+from agent.application.tool.tool import Tool, ArgsT
+from agent.domain.vo.tool_risk import ToolRisk
 from agent.infrastructure.tool.util import MAX_FILE_SIZE_BYTES
 
+class EditProjectFileArgs(TypedDict):
+    filename: str
+    old_text: str
+    new_text: str
 
-class EditProjectFile(Tool):
+class EditProjectFile(Tool[EditProjectFileArgs]):
     """Read a UTF-8 text file from the project workspace."""
-    name: str = "edit_project_file"
-    description: str = "Replace exactly one occurrence of a text string in an existing UTF-8 project file. Fails if " \
-                       "the text is missing or ambiguous. Does not create files."
-    parameters_schema: dict[str, object] = {
-        "type": "object",
-        "properties": {
-            "filename": {
-                "type": "string",
-                "description": "Workspace-relative path of the new file, such as src/app.ts.",
-                "minLength": 1,
+
+    @property
+    def display_name(self) -> str:
+        return "Edit project file"
+
+    @property
+    def name(self) -> str:
+        return "edit_project_file"
+
+    @property
+    def description(self) -> str:
+        return "Replace exactly one occurrence of a text string in an existing UTF-8 project file. Fails if " \
+               "the text is missing or ambiguous. Does not create files."
+
+    @property
+    def tool_risk(self) -> ToolRisk:
+        return ToolRisk.MUTATING
+
+    @property
+    def parameters_schema(self) -> dict[str, object]:
+        return {
+            "type": "object",
+            "properties": {
+                "filename": {
+                    "type": "string",
+                    "description": "Workspace-relative path of the new file, such as src/app.ts.",
+                    "minLength": 1,
+                },
+                "old_text": {
+                    "type": "string",
+                    "description": "Exact text to find and replace.",
+                    "minLength": 1,
+                },
+                "new_text": {
+                    "type": "string",
+                    "description": "Replacement text.",
+                },
             },
-            "old_text": {
-                "type": "string",
-                "description": "Exact text to find and replace.",
-                "minLength": 1,
-            },
-            "new_text": {
-                "type": "string",
-                "description": "Replacement text.",
-            },
-        },
-        "required": ["filename", "old_text", "new_text"],
-        "additionalProperties": False
-    }
+            "required": ["filename", "old_text", "new_text"],
+            "additionalProperties": False
+        }
 
     def __init__(self, workspace_root: Path):
         self.workspace_root = workspace_root.resolve()
+
+    def display_arguments(self, arguments: ArgsT) -> str | None:
+        return f"Filename: {arguments['filename']}"
 
     def execute(self, arguments: dict[str, object]) -> ToolResult:
         filename: str = cast(str, arguments["filename"])
         new_text: str = cast(str, arguments["new_text"])
         old_text: str = cast(str, arguments["old_text"])
-
-        print("---------------------------------")
-        print(filename)
-        print("---------------------------------")
-        print(old_text)
-        print("---------------------------------")
-        print(new_text)
-        print("---------------------------------")
 
         if not filename.strip():
             return ToolResult(success=False, error="Filename must not be empty.")

@@ -5,9 +5,9 @@ from ollama import Client
 from rich.console import Console
 
 from agent.application.port.planner import Planner
+from agent.application.services.tool_executor import ToolExecutor
 from agent.domain.vo.plan_proposal import ProposedPlanStep, RequirementAnalysisResult
 from agent.domain.vo.prompt import Prompt
-from agent.domain.vo.tool_result import ToolResult
 from agent.infrastructure.prompt import PLAN_PROMPT, PROJECT_DISCOVERY_PROMPT, ANALYSE_REQUIREMENT_PROMPT
 from agent.infrastructure.schema import PLAN_SCHEMA, ANALYSIS_SCHEMA
 from agent.infrastructure.tool_registry import ToolRegistry
@@ -21,10 +21,9 @@ class OllamaPlanner(Planner):
         self._client = client
         self._model = model
         self._tool_registry = tool_registry
-        self._tools = tool_registry.get_tools_definition()
         self._console = console
 
-    def create_proposal(self, context: str, prompt: Prompt) -> list[ProposedPlanStep]:
+    def create_proposal(self, context: str | None, prompt: Prompt) -> list[ProposedPlanStep]:
         try:
             user_content = f"Original request:\n{prompt.value}"
             if context:
@@ -56,14 +55,19 @@ class OllamaPlanner(Planner):
                     raise ValueError("Step descriptions and title cannot be empty")
 
                 steps.append(ProposedPlanStep(description=description.strip(), title=title.strip()))
-            self._console.print("[green]Generated plan[/green]")
+            self._console.print("[green][bold]Generated plan successfully[/bold][/green]")
             return steps
 
         except (KeyError, TypeError, ValueError) as exc:
             self._console.print("[red]Failed to generating plan[/red]")
             raise RuntimeError("Ollama returned an invalid plan proposal.") from exc
 
-    def discover_context(self, analysis_result: RequirementAnalysisResult, prompt: Prompt) -> str | None:
+    def discover_context(
+            self,
+            analysis_result: RequirementAnalysisResult,
+            prompt: Prompt,
+            tool_executor: ToolExecutor
+    ) -> str | None:
         if not analysis_result.require_context:
             return None
 
@@ -83,12 +87,12 @@ class OllamaPlanner(Planner):
                 with self._console.status("[cyan]Discovering context...[/cyan]", spinner="bouncingBar"):
                     response = self._client.chat(
                         model=self._model,
-                        tools=self._tools,
+                        tools=self._tool_registry.tools_definition,
                         messages=messages,
                         options={"temperature": 0}
                     )
-                message = response.message
-                messages.append(cast(dict[str, str], cast(object, message)))
+                message = response["message"]
+                messages.append(message)
                 tool_calls = message.tool_calls or []
                 if not tool_calls:
                     if message.content:
@@ -96,16 +100,10 @@ class OllamaPlanner(Planner):
                     break
 
                 for tool_call in tool_calls:
-                    name = tool_call.function.name
-                    arguments = tool_call.function.arguments
-
-                    if not isinstance(arguments, dict):
-                        raise RuntimeError(f"Invalid arguments returned for tool: {name}")
-
-                    try:
-                        result = self._tool_registry.execute(name, arguments)
-                    except Exception:
-                        result = ToolResult(success=False, error="Tool execution failed")
+                    name = tool_call.function["name"]
+                    arguments = tool_call.function["arguments"] or {}
+                    tool = self._tool_registry.get_tool(name)
+                    result = tool_executor.execute(tool, arguments)
 
                     if result.success:
                         result_content = json.dumps(result.data, default=str, )
@@ -125,9 +123,10 @@ class OllamaPlanner(Planner):
             if not context_parts:
                 raise RuntimeError("Project context was required, but no useful context was gathered.")
 
-            self._console.print("[green]Discovered context[/green]")
+            self._console.print("[green][bold]Discovered context successfully[/bold][/green]")
             return "\n\n".join(context_parts)
-        except Exception:
+        except Exception as exc:
+            self._console.print(f"[red]Error: {exc}[/red]")
             self._console.print("[red]Failed to discover context[/red]")
             raise RuntimeError("Failed to discover context")
 
@@ -148,7 +147,7 @@ class OllamaPlanner(Planner):
             context_request = result["context_request"]
             require_context = cast(bool, result["require_context"])
 
-            self._console.print("[green]Analysed requirements[/green]")
+            self._console.print("[green][bold]Analysed requirements successfully[/bold][/green]")
             return RequirementAnalysisResult(context_request=context_request, require_context=require_context)
         except (KeyError, TypeError, ValueError) as exc:
             self._console.print("[red]Failed to analysing requirements[/red]")

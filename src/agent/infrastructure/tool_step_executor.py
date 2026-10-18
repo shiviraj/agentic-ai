@@ -2,7 +2,9 @@ from ollama import Client
 from rich.console import Console
 
 from agent.application.port.step_executor import StepExecutor
+from agent.application.services.tool_executor import ToolExecutor
 from agent.domain.entity.plan_step import PlanStep
+from agent.domain.vo.step_result import StepResult
 from agent.infrastructure.prompt import STEP_EXECUTOR_PROMPT
 from agent.infrastructure.tool_registry import ToolRegistry
 
@@ -15,10 +17,9 @@ class ToolStepExecutor(StepExecutor):
         self._client = client
         self._model = model
         self._tool_registry = tool_registry
-        self._tools = tool_registry.get_tools_definition()
         self._console = console
 
-    def execute(self, step: PlanStep):
+    def execute(self, step: PlanStep, tool_executor: ToolExecutor) -> StepResult:
         try:
             messages = [
                 {"role": "system", "content": STEP_EXECUTOR_PROMPT},
@@ -28,34 +29,26 @@ class ToolStepExecutor(StepExecutor):
                 with self._console.status("[green]Executing step [/]", spinner="bouncingBar"):
                     response = self._client.chat(
                         model=self._model,
-                        tools=self._tools,
+                        tools=self._tool_registry.tools_definition,
                         messages=messages,
                         options={"temperature": 0}
                     )
                 message = response["message"]
                 # messages.append(message)
                 tool_calls = message.tool_calls or []
-                print(len(tool_calls), tool_calls)
                 if not tool_calls:
-                    return {
-                        "success": True,
-                        "step": step,
-                        "result": message.content,
-                        "error": None,
-                    }
+                    return StepResult(success=True, step=step, data=message.content)
 
                 for tool_call in tool_calls:
                     tool_name = tool_call.function["name"]
                     arguments = tool_call.function["arguments"] or {}
-                    tool_result = self._tool_registry.execute(tool_name, arguments)
+                    tool = self._tool_registry.get_tool(tool_name)
+                    tool_result = tool_executor.execute(tool, arguments)
                     messages.append({"role": "tool", "tool_name": tool_name, "content": str(tool_result)})
+            else:
+                return StepResult(success=True, step=step)
         except Exception as exc:
-            return {
-                "success": False,
-                "step": step,
-                "result": None,
-                "error": exc,
-            }
+            return StepResult(success=False, step=step, error=str(exc))
 
     @staticmethod
     def _build_step_prompt(step: PlanStep) -> str:

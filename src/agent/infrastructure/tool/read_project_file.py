@@ -1,32 +1,57 @@
 from pathlib import Path
-from typing import cast
+from typing import TypedDict
 
+from agent.application.tool.tool import Tool
 from agent.domain.vo.tool_result import ToolResult
-from agent.infrastructure.tool.tool import Tool
+from agent.domain.vo.tool_risk import ToolRisk
 from agent.infrastructure.tool.util import MAX_FILE_SIZE_BYTES
 
 
-class ReadProjectFile(Tool):
+class ReadProjectFileArgs(TypedDict):
+    filename: str
+
+
+class ReadProjectFile(Tool[ReadProjectFileArgs]):
     """Read a UTF-8 text file from the project workspace."""
-    name: str = "read_file"
-    description: str = "Read a UTF-8 text file from the project workspace. Provide a project-relative file path."
-    parameters_schema: dict[str, object] = {
-        "type": "object",
-        "properties": {
-            "filename": {
-                "type": "string",
-                "description": "Path to the file relative to the project workspace.",
+
+    @property
+    def display_name(self) -> str:
+        return "Read a file from the project workspace."
+
+    @property
+    def name(self) -> str:
+        return "read_project_file"
+
+    @property
+    def description(self) -> str:
+        return "Read a UTF-8 text file from the project workspace. Provide a project-relative file path."
+
+    @property
+    def tool_risk(self) -> ToolRisk:
+        return ToolRisk.READ_ONLY
+
+    @property
+    def parameters_schema(self) -> dict[str, object]:
+        return {
+            "type": "object",
+            "properties": {
+                "filename": {
+                    "type": "string",
+                    "description": "Path to the file relative to the project workspace.",
+                },
             },
-        },
-        "required": ["file_path"],
-        "additionalProperties": False,
-    }
+            "required": ["filename"],
+            "additionalProperties": False,
+        }
 
     def __init__(self, workspace_root: Path):
         self.workspace_root = workspace_root.resolve()
 
-    def execute(self, arguments: dict[str, object]) -> ToolResult:
-        filename: str = cast(str, arguments["filename"])
+    def display_arguments(self, arguments: ReadProjectFileArgs) -> str | None:
+        return f"Filename: {arguments['filename']}"
+
+    def execute(self, arguments: ReadProjectFileArgs) -> ToolResult:
+        filename = arguments["filename"]
         project_root = self.workspace_root.resolve()
         requested_path = project_root / filename
 
