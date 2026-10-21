@@ -41,12 +41,17 @@ class InspectProject(Tool):
 
     def execute(self, arguments: dict[str, object]) -> ToolResult:
         files = sorted(
-            path.name
-            for path in self.workspace_root.iterdir()
-            if path.name not in IGNORED_DIRECTORIES and not path.name.startswith(".")
+            str(path.relative_to(self.workspace_root))
+            for path in self.workspace_root.rglob("*")
+            if path.is_file()
+            and not any(
+                part in IGNORED_DIRECTORIES
+                for part in path.relative_to(self.workspace_root).parts
+            )
+            and not any(
+                part.startswith(".")
+                for part in path.relative_to(self.workspace_root).parts
+            )
         )
 
-        return ToolResult(
-            success=True,
-            data={"project_directory": self.workspace_root.name, "files": files}
-        )
+        return ToolResult(success=True, data={"project_directory": self.workspace_root.name, "files": files})

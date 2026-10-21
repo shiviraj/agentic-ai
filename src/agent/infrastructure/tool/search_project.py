@@ -70,7 +70,7 @@ class SearchProject(Tool[SearchProjectArgs]):
     def execute(self, arguments: SearchProjectArgs) -> ToolResult:
         query = arguments["query"]
         file_pattern = arguments["file_pattern"]
-        max_results = arguments["max_results"]
+        max_results = arguments.get("max_results", 100)
 
         matches: list[dict[str, object]] = []
         files_scanned = 0

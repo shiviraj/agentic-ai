@@ -6,10 +6,12 @@ from agent.application.tool.tool import Tool, ArgsT
 from agent.domain.vo.tool_risk import ToolRisk
 from agent.infrastructure.tool.util import MAX_FILE_SIZE_BYTES
 
+
 class EditProjectFileArgs(TypedDict):
     filename: str
     old_text: str
     new_text: str
+
 
 class EditProjectFile(Tool[EditProjectFileArgs]):
     """Read a UTF-8 text file from the project workspace."""
@@ -58,22 +60,13 @@ class EditProjectFile(Tool[EditProjectFileArgs]):
     def __init__(self, workspace_root: Path):
         self.workspace_root = workspace_root.resolve()
 
-    def display_arguments(self, arguments: ArgsT) -> str | None:
+    def display_arguments(self, arguments: EditProjectFileArgs) -> str | None:
         return f"Filename: {arguments['filename']}"
 
-    def execute(self, arguments: dict[str, object]) -> ToolResult:
-        filename: str = cast(str, arguments["filename"])
-        new_text: str = cast(str, arguments["new_text"])
-        old_text: str = cast(str, arguments["old_text"])
-
-        if not filename.strip():
-            return ToolResult(success=False, error="Filename must not be empty.")
-
-        if not old_text:
-            return ToolResult(success=False, error="Search text must not be empty.")
-
-        if not isinstance(new_text, str):
-            return ToolResult(success=False, error="Replacement content must be a string.")
+    def execute(self, arguments: EditProjectFileArgs) -> ToolResult:
+        filename = arguments["filename"]
+        new_text = arguments["new_text"]
+        old_text = arguments["old_text"]
 
         requested_path = (self.workspace_root / filename).resolve()
 
@@ -85,8 +78,10 @@ class EditProjectFile(Tool[EditProjectFileArgs]):
 
         size_bytes = requested_path.stat().st_size
         if size_bytes > MAX_FILE_SIZE_BYTES:
-            return ToolResult(success=False, error=
-            f"File is too large to edit. Maximum size is {MAX_FILE_SIZE_BYTES} bytes.")
+            return ToolResult(
+                success=False,
+                error=f"File is too large to edit. Maximum size is {MAX_FILE_SIZE_BYTES} bytes."
+            )
 
         try:
             original_content = requested_path.read_text(encoding="utf-8")

@@ -56,9 +56,8 @@ def main() -> None:
                 workflow.execute(prompt)
             except KeyboardInterrupt:
                 console.print("\n[yellow]Request interrupted.[/yellow]\n")
-            except Exception:
-                console.print("\n[bold red]Failed to process the request.[/bold red]")
-                console.print("[dim]Check the application logs for details.[/dim]\n")
+            except Exception as exc:
+                console.print(f"\n[bold red]Failed to process the request. {exc}[/bold red]")
 
     except KeyboardInterrupt:
         pass

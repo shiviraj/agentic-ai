@@ -20,7 +20,10 @@ class CreatePlan:
 
     def execute(self, prompt: Prompt) -> ImplementationPlan:
         analysis_result = self._planner.analyze_requirement(prompt)
-        context = self._planner.discover_context(analysis_result, prompt, self._tool_executor)
+        discovery_context = self._planner.discover_context(analysis_result, prompt, self._tool_executor)
+        context = None
+        if discovery_context:
+            context = self._planner.summarize_context(discovery_context, prompt)
         proposal = self._planner.create_proposal(context=context, prompt=prompt)
 
         steps = [
