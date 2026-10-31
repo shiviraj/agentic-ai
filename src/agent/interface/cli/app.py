@@ -9,7 +9,7 @@ from agent.interface.cli.plan_execution import (execute_plan as execute_plan_wit
 from agent.interface.cli.prompt_input import (GOODBYE, create_prompt_session, user_prompt)
 
 PROMPT_INSTRUCTIONS = """\
-Senior Backend Engineer Agent
+Backend Engineer Agent
 
 Commands:
   .exit       Exit the application
