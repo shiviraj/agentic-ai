@@ -2,7 +2,6 @@ import json
 from typing import Any
 
 from ollama import Client
-from rich.console import Console
 
 from agent.application.port.step_executor import StepExecutor
 from agent.application.services.tool_executor import ToolExecutor
@@ -11,20 +10,21 @@ from agent.domain.vo.step_result import StepResult
 from agent.infrastructure.prompt import STEP_EXECUTOR_PROMPT
 from agent.infrastructure.schema import FINISH_STEP_EXECUTION
 from agent.infrastructure.tool_registry import ToolRegistry
+from agent.shared.logger.Logger import Logger
 
-MAX_ITERATIONS = 10
-MAX_INVALID_RESPONSES = 3
+MAX_ITERATIONS = 20
+MAX_INVALID_RESPONSES = 5
 
 
 class ToolStepExecutor(StepExecutor):
 
-    def __init__(self, client: Client, model: str, tool_registry: ToolRegistry, console: Console) -> None:
+    def __init__(self, client: Client, model: str, tool_registry: ToolRegistry) -> None:
         self._client = client
         self._model = model
         self._tool_registry = tool_registry
-        self._console = console
+        self._logger = Logger("ToolStepExecutor")
 
-    def execute(self, step: PlanStep, tool_executor: ToolExecutor) -> StepResult:
+    def execute(self, step: PlanStep, tool_executor: ToolExecutor, previous_results: list[StepResult]) -> StepResult:
         finish_name = FINISH_STEP_EXECUTION["function"]["name"]
 
         tools = [
@@ -37,20 +37,25 @@ class ToolStepExecutor(StepExecutor):
             for definition in self._tool_registry.tools_definition
         }
 
+        previous_context = self._serialize_previous_results(previous_results)
+
         messages = [
             {
                 "role": "system",
                 "content": STEP_EXECUTOR_PROMPT.format(
-                    current_step=self._build_step_prompt(step),
-                    plan_progress=(
-                        "Execute only the current step. The orchestrator "
-                        "controls progression to subsequent steps."
-                    ),
+                    current_step=f"Title: {step.title}\nDescription: {step.description}",
+                    plan_progress=("Execute only the current step. The orchestrator controls progression to " \
+                                   "subsequent steps."),
                 ),
             },
-            {"role": "user", "content": (
-                "Execute the current step according to the system instructions. Begin by selecting one appropriate tool."),
-             },
+            {
+                "role": "user",
+                "content": (
+                    f"Previous execution results:\n{previous_context}\n\n"
+                    "Execute the current step according to the system "
+                    "instructions. Begin by selecting one appropriate tool."
+                ),
+            },
         ]
 
         # Maps a canonical tool call to its result.
@@ -61,7 +66,7 @@ class ToolStepExecutor(StepExecutor):
 
         try:
             for iteration in range(MAX_ITERATIONS):
-                with self._console.status(f"[green]Executing step {step.sequence}...[/]", spinner="bouncingBar", ):
+                with self._logger.status("Executing step...", "bouncingBar", "green"):
                     response = self._client.chat(
                         model=self._model,
                         tools=tools,
@@ -72,7 +77,7 @@ class ToolStepExecutor(StepExecutor):
                 message = response.message
                 tool_calls = message.tool_calls or []
 
-                self._console.print(f"[dim]Iteration {iteration + 1}: {len(tool_calls)} tool call(s)[/dim]")
+                self._logger.log(f"Iteration {iteration + 1}: {len(tool_calls)} tool call(s)", "dim")
 
                 # Enforce exactly one tool call per response.
                 if len(tool_calls) != 1:
@@ -221,9 +226,21 @@ class ToolStepExecutor(StepExecutor):
         )
 
     @staticmethod
-    def _build_step_prompt(step: PlanStep) -> str:
-        return (
-            f"Step sequence: {step.sequence}\n"
-            f"Title: {step.title}\n"
-            f"Description: {step.description}\n"
-        )
+    def _serialize_previous_results(previous_results: list[StepResult]) -> str:
+        if not previous_results:
+            return "No previous steps have been executed."
+
+        results = []
+
+        for result in previous_results:
+            results.append({
+                "step": {
+                    "title": result.step.title,
+                    "description": result.step.description,
+                },
+                "success": result.success,
+                "data": result.data,
+                "error": result.error,
+            })
+
+        return json.dumps(results, indent=2, default=str)

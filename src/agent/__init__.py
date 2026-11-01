@@ -2,62 +2,82 @@ import os
 from pathlib import Path
 from ollama import Client
 from prompt_toolkit import PromptSession
-from rich.console import Console
-from agent.application.services.create_plan import CreatePlan
+
+from agent.application.services.analyze_requirement_service import AnalyzeRequirementService
+from agent.application.services.create_proposal_service import CreateProposalService
+from agent.application.services.discover_context_service import DiscoverContextService
 from agent.application.services.execute_plan import ExecutePlan
 from agent.application.services.tool_executor import ToolExecutor
+from agent.application.workflow.create_plan_workflow import CreatePlanWorkflow
+from agent.application.workflow.execute_plan_workflow import ExecutePlanWorkflow
 from agent.application.workflow.progress_prompt_workflow import ProcessPromptWorkflow
+from agent.domain.policy.context_discover_policy import ContextDiscoverPolicy
+from agent.domain.policy.requirement_analysis_policy import RequirementAnalysisPolicy
 from agent.domain.policy.tool_approval_policy import ToolApprovalPolicy
 from agent.infrastructure.cli_approval_gateway import CliApprovalGateway
 from agent.infrastructure.create_tool_registry import create_tool_registry
-from agent.infrastructure.ollama_planner import OllamaPlanner
+from agent.infrastructure.port.context_discoverer_impl import ContextDiscovererImpl
+from agent.infrastructure.port.proposal_creator_impl import ProposalCreatorImpl
+from agent.infrastructure.port.requirement_analyzer_impl import RequirementAnalyzerImpl
+from agent.infrastructure.prompt import PROMPT_INSTRUCTIONS
 from agent.infrastructure.tool_step_executor import ToolStepExecutor
-from agent.interface.cli.app import PROMPT_INSTRUCTIONS
-from agent.interface.cli.display_plan import display_plan, display_tool_execution, display_tool_result, \
-    display_step_executing
+from agent.interface.cli.display_plan import display_tool_execution, display_tool_result
 from agent.interface.cli.prompt_input import create_prompt_session, user_prompt
+from agent.shared.logger.Logger import Logger
 
 
 def main() -> None:
     client = Client(host=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"), timeout=120)
     model = os.getenv("OLLAMA_MODEL", "llama3.2:latest")
-    console = Console()
+    logger = Logger("Main")
     registry = create_tool_registry(Path('workspace'))
 
     tool_executor = ToolExecutor(
         ToolApprovalPolicy(),
-        CliApprovalGateway(console),
+        CliApprovalGateway(),
         display_tool_execution=display_tool_execution,
         display_tool_result=display_tool_result
     )
-    planner = OllamaPlanner(client, model=model, tool_registry=registry, console=console)
-    step_executor = ToolStepExecutor(client, model, registry, console)
 
-    create_plan = CreatePlan(planner=planner, display_plan=display_plan, tool_executor=tool_executor)
-    execute_plan = ExecutePlan(
-        step_executor=step_executor,
-        tool_executor=tool_executor,
-        display_step_executing=display_step_executing
+    step_executor = ToolStepExecutor(client, model, registry)
+    requirement_analyzer = RequirementAnalyzerImpl(client=client, model=model)
+    context_discoverer = ContextDiscovererImpl(client=client, model=model, tool_registry=registry)
+    proposal_creator = ProposalCreatorImpl(client=client, model=model)
+
+    requirement_analysis_policy = RequirementAnalysisPolicy()
+    context_discover_policy = ContextDiscoverPolicy()
+
+    analyze_requirement_service = AnalyzeRequirementService(requirement_analyzer, requirement_analysis_policy)
+    discover_context_service = DiscoverContextService(context_discoverer, context_discover_policy, tool_executor)
+    create_proposal_service = CreateProposalService(proposal_creator)
+
+    execute_plan = ExecutePlan(step_executor, tool_executor)
+
+    create_plan_workflow = CreatePlanWorkflow(
+        analyze_requirement_service,
+        discover_context_service,
+        create_proposal_service
     )
-    workflow = ProcessPromptWorkflow(create_plan=create_plan, execute_plan=execute_plan)
+    execute_plan_workflow = ExecutePlanWorkflow(execute_plan)
+    workflow = ProcessPromptWorkflow(create_plan_workflow, execute_plan_workflow)
 
     session: PromptSession[str] = create_prompt_session()
-    console.print(PROMPT_INSTRUCTIONS, style="cyan")
+    logger.log(PROMPT_INSTRUCTIONS, "cyan")
 
     try:
         while True:
             should_exit, prompt = user_prompt(session)
             if should_exit:
-                console.print(prompt.value, style="dim")
+                logger.log(prompt.value, "dim")
                 break
             if not prompt:
                 continue
             try:
                 workflow.execute(prompt)
             except KeyboardInterrupt:
-                console.print("\n[yellow]Request interrupted.[/yellow]\n")
+                logger.log("Request interrupted.", 'yellow')
             except Exception as exc:
-                console.print(f"\n[bold red]Failed to process the request. {exc}[/bold red]")
+                logger.log(f"Failed to process the request. {exc}", "bold red")
 
     except KeyboardInterrupt:
         pass

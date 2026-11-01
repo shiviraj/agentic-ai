@@ -4,5 +4,5 @@ from agent.domain.vo.step_result import StepResult
 
 
 class StepExecutor:
-    def execute(self, step: PlanStep, tool_executor: ToolExecutor) -> StepResult:
+    def execute(self, step: PlanStep, tool_executor: ToolExecutor, previous_results: list[StepResult]) -> StepResult:
         ...

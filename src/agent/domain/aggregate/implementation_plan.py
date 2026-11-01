@@ -17,13 +17,6 @@ class ImplementationPlan(Aggregate[PlanId]):
         if not self.steps:
             raise ValueError("An implementation plan must contain steps")
 
-        sequences = [step.sequence for step in self.steps]
-
-        if len(sequences) != len(set(sequences)):
-            raise ValueError("Plan step sequences must be unique")
-
-        self.steps.sort(key=lambda step: step.sequence)
-
     @classmethod
-    def create(cls, steps: list[PlanStep]) -> "ImplementationPlan":
+    def create(cls, steps: list[PlanStep]) -> ImplementationPlan:
         return cls(id=PlanId.generate(), steps=steps)

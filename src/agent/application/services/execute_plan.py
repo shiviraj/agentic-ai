@@ -1,24 +1,24 @@
-from typing import Callable
-
 from agent.application.port.step_executor import StepExecutor
 from agent.application.services.tool_executor import ToolExecutor
 from agent.domain.aggregate.implementation_plan import ImplementationPlan
-from agent.domain.entity.plan_step import PlanStep
+from agent.domain.vo.step_result import StepResult
+from agent.shared.logger.Logger import Logger
 
 
 class ExecutePlan:
 
-    def __init__(
-            self,
-            step_executor: StepExecutor,
-            tool_executor: ToolExecutor,
-            display_step_executing: Callable[[PlanStep], None]
-    ) -> None:
+    def __init__(self, step_executor: StepExecutor, tool_executor: ToolExecutor) -> None:
         self._step_executor = step_executor
         self._tool_executor = tool_executor
-        self._display_step_executing = display_step_executing
+        self._logger = Logger("ExecutePlan")
 
     def execute(self, plan: ImplementationPlan) -> None:
+        previous_results: list[StepResult] = []
         for step in plan.steps:
-            self._display_step_executing(step)
-            self._step_executor.execute(step, self._tool_executor)
+            self._logger.log(f"{step.sequence}. {step.title}\n{step.description}", 'cyan')
+            result = self._step_executor.execute(step, self._tool_executor, previous_results)
+            previous_results.append(result)
+            if not result.success:
+                # Do not execute dependent steps after a failure or blocker.
+                self._logger.log(f"Step execution failed {result}", 'red bold')
+                break
