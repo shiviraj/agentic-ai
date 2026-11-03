@@ -15,10 +15,10 @@ class ExecutePlan:
     def execute(self, plan: ImplementationPlan) -> None:
         previous_results: list[StepResult] = []
         for step in plan.steps:
-            self._logger.log(f"{step.sequence}. {step.title}\n{step.description}", 'cyan')
+            self._logger.info(f"{step.sequence}. {step.title}\n{step.description}", 'cyan')
             result = self._step_executor.execute(step, self._tool_executor, previous_results)
             previous_results.append(result)
             if not result.success:
                 # Do not execute dependent steps after a failure or blocker.
-                self._logger.log(f"Step execution failed {result}", 'red bold')
+                self._logger.info(f"Step execution failed {result}", 'red bold')
                 break

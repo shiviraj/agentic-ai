@@ -26,12 +26,7 @@ class ToolStepExecutor(StepExecutor):
 
     def execute(self, step: PlanStep, tool_executor: ToolExecutor, previous_results: list[StepResult]) -> StepResult:
         finish_name = FINISH_STEP_EXECUTION["function"]["name"]
-
-        tools = [
-            *self._tool_registry.tools_definition,
-            FINISH_STEP_EXECUTION,
-        ]
-
+        tools = [*self._tool_registry.tools_definition, FINISH_STEP_EXECUTION]
         allowed_tools = {
             definition["function"]["name"]
             for definition in self._tool_registry.tools_definition
@@ -44,7 +39,7 @@ class ToolStepExecutor(StepExecutor):
                 "role": "system",
                 "content": STEP_EXECUTOR_PROMPT.format(
                     current_step=f"Title: {step.title}\nDescription: {step.description}",
-                    plan_progress=("Execute only the current step. The orchestrator controls progression to " \
+                    plan_progress=("Execute only the current step. The orchestrator controls progression to "
                                    "subsequent steps."),
                 ),
             },
@@ -58,15 +53,11 @@ class ToolStepExecutor(StepExecutor):
             },
         ]
 
-        # Maps a canonical tool call to its result.
-        # Identical calls will never execute twice during this step.
         executed_calls: dict[str, str] = {}
-
         invalid_responses = 0
-
         try:
             for iteration in range(MAX_ITERATIONS):
-                with self._logger.status("Executing step...", "bouncingBar", "green"):
+                with self._logger.status("Executing step...", "bouncingBar"):
                     response = self._client.chat(
                         model=self._model,
                         tools=tools,
@@ -77,14 +68,12 @@ class ToolStepExecutor(StepExecutor):
                 message = response.message
                 tool_calls = message.tool_calls or []
 
-                self._logger.log(f"Iteration {iteration + 1}: {len(tool_calls)} tool call(s)", "dim")
+                self._logger.debug(
+                    f"Discovery iteration {iteration + 1}: {len(tool_calls)} tool call(s), message: {message}")
 
-                # Enforce exactly one tool call per response.
                 if len(tool_calls) != 1:
                     invalid_responses += 1
 
-                    # Do not append a multi-tool-call assistant message:
-                    # its tool calls would remain unresolved in history.
                     if not tool_calls:
                         messages.append({"role": "assistant", "content": message.content or "", })
 
@@ -100,61 +89,61 @@ class ToolStepExecutor(StepExecutor):
                     })
 
                     if invalid_responses >= MAX_INVALID_RESPONSES:
-                        return StepResult(
-                            success=False,
-                            step=step,
-                            error="Model repeatedly failed to return exactly one tool call.",
-                        )
+                        return StepResult(success=False, step=step,
+                                          error="Model repeatedly failed to return exactly one tool call.")
 
                     continue
 
                 tool_call = tool_calls[0]
                 function = tool_call.function
 
-                # Support Ollama objects and dictionary-shaped responses.
-                tool_name = (function.name if hasattr(function, "name") else function["name"])
-                arguments = (function.arguments if hasattr(function, "arguments") else function.get("arguments", {}))
+                name = function["name"]
+                arguments = function.get("arguments", {})
 
-                if isinstance(arguments, str):
-                    try:
-                        arguments = json.loads(arguments)
-                    except json.JSONDecodeError:
-                        arguments = None
-
-                # Preserve the actual assistant tool-call message.
                 messages.append(message)
 
                 if not isinstance(arguments, dict):
-                    result_content = json.dumps({"success": False, "error": "Tool arguments must be a JSON object.", })
-                    messages.append({"role": "tool", "tool_name": tool_name, "content": result_content, })
+                    result_content = json.dumps({"success": False, "error": "Tool arguments must be a JSON object."})
+                    messages.append({"role": "tool", "tool_name": name, "content": result_content, })
                     continue
 
                 # The finish tool terminates this step and is never
                 # executed through the ordinary project-tool executor.
-                if tool_name == finish_name:
+                if name == finish_name:
                     return self._build_finish_result(step, arguments)
 
                 # Prevent unregistered tools from being executed.
-                if tool_name not in allowed_tools:
-                    result_content = json.dumps({"success": False, "error": f"Tool {tool_name!r} is not registered.", })
-                    messages.append({"role": "tool", "tool_name": tool_name, "content": result_content, })
+                if name not in allowed_tools:
+                    result_content = json.dumps({"success": False, "error": f"Tool {name!r} is not registered.", })
+                    messages.append({"role": "tool", "tool_name": name, "content": result_content, })
                     continue
 
-                call_key = json.dumps({"tool": tool_name, "arguments": arguments, }, sort_keys=True,
-                                      separators=(",", ":"), default=str, )
+                call_key = json.dumps(
+                    {"tool_name": name, "arguments": arguments, "version": tool_executor.version},
+                    sort_keys=True,
+                    separators=(",", ":"),
+                    default=str,
+                )
 
                 # Reuse the previous result instead of executing twice.
                 if call_key in executed_calls:
                     result_content = executed_calls[call_key]
-                    messages.append({"role": "tool", "tool_name": tool_name, "content": result_content, })
-                    messages.append({"role": "user", "content": (
-                        "This exact tool call has already been executed. Use its previous result and choose a different action, or call finish_step if the step is complete or cannot proceed."),
-                                     })
+                    messages.append({"role": "tool", "tool_name": name, "content": result_content})
+                    messages.append({
+                        "role": "user",
+                        "content": (
+                            "You repeated an identical tool call. Its result is already "
+                            "available above. Do not call it again. Choose a different "
+                            "registered tool that provides missing information, or call "
+                            f"{finish_name} if the step is complete. "
+                            "You must make exactly one native tool call."
+                        ),
+                    })
                     continue
 
                 # Execute each distinct tool call at most once.
                 try:
-                    tool = self._tool_registry.get_tool(tool_name)
+                    tool = self._tool_registry.get_tool(name)
                     tool_result = tool_executor.execute(tool, arguments)
 
                     result_content = json.dumps(
@@ -170,22 +159,18 @@ class ToolStepExecutor(StepExecutor):
 
                 executed_calls[call_key] = result_content
 
-                messages.append({"role": "tool", "tool_name": tool_name, "content": result_content, })
+                messages.append({"role": "tool", "tool_name": name, "content": result_content})
 
             return StepResult(success=False, step=step, error=(
                 f"Step exceeded the maximum of {MAX_ITERATIONS} " "LLM iterations without a finish_step call."), )
 
         except Exception as exc:
-            return StepResult(success=False, step=step, error=str(exc), )
+            return StepResult(success=False, step=step, error=str(exc))
 
     @staticmethod
     def _build_finish_result(step: PlanStep, arguments: dict[str, Any]) -> StepResult:
         status = arguments.get("status")
         summary = arguments.get("summary")
-        validation_results = arguments.get("validation_results")
-        files_changed = arguments.get("files_changed")
-        errors = arguments.get("errors")
-        remaining_work = arguments.get("remaining_work")
 
         if status not in {"success", "failure", "blocked"}:
             return StepResult(success=False, step=step, error="finish_step returned an invalid status.", )
@@ -193,37 +178,9 @@ class ToolStepExecutor(StepExecutor):
         if not isinstance(summary, str) or not summary.strip():
             return StepResult(success=False, step=step, error="finish_step must provide a non-empty summary.", )
 
-        for field_name, value in (
-                ("validation_results", validation_results),
-                ("files_changed", files_changed),
-                ("errors", errors),
-                ("remaining_work", remaining_work),
-        ):
-            if not isinstance(value, list) or not all(
-                    isinstance(item, str) for item in value
-            ):
-                return StepResult(success=False, step=step, error=f"finish_step returned invalid {field_name}.", )
+        data = {"status": status, "summary": summary}
 
-        data = {
-            "status": status,
-            "summary": summary,
-            "validation_results": validation_results,
-            "files_changed": files_changed,
-            "errors": errors,
-            "remaining_work": remaining_work,
-        }
-
-        return StepResult(
-            success=(status == "success"),
-            step=step,
-            data=data,
-            error=(
-                "; ".join(errors)
-                or summary
-                if status != "success"
-                else None
-            ),
-        )
+        return StepResult(success=(status == "success"), step=step, data=data)
 
     @staticmethod
     def _serialize_previous_results(previous_results: list[StepResult]) -> str:

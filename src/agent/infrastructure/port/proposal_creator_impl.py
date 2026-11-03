@@ -28,24 +28,20 @@ class ProposalCreatorImpl(ProposalCreator):
             {"role": "system", "content": PLAN_PROMPT},
             {"role": "user", "content": user_content},
         ]
-        with self._logger.status("Generating implementation plan...", "bouncingBar", "cyan"):
+        with self._logger.status("Generating implementation plan...", "bouncingBar"):
             response = self._client.chat(
                 model=self._model,
                 messages=messages,
                 format=PLAN_SCHEMA,
                 options={"temperature": 0},
             )
-        content = response.message.content
-        if not content or not content.strip():
-            raise RuntimeError("The model returned an empty implementation plan.")
-
-        try:
-            plan_data = json.loads(content)
-        except json.JSONDecodeError as exc:
-            raise RuntimeError("The model returned invalid JSON for the implementation plan.") from exc
+        content = response.message["content"]
+        self._logger.debug(f"Proposal creator llm response: {content}")
+        plan_data = json.loads(content)
 
         steps_data = plan_data.get("steps") if isinstance(plan_data, dict) else None
         if not isinstance(steps_data, list) or not steps_data:
+            self._logger.error("The implementation plan must contain a non-empty steps array.")
             raise RuntimeError("The implementation plan must contain a non-empty steps array.")
 
         try:
@@ -54,9 +50,8 @@ class ProposalCreatorImpl(ProposalCreator):
                 for index, step_data in enumerate(steps_data)
             ]
         except (TypeError, ValueError) as exc:
-            raise RuntimeError("The implementation plan contains invalid step data. Check PLAN_SCHEMA against "
-                               "ProposedPlanStep.") from exc
-        self._logger.log(f"Generated {len(proposed_steps)} proposed step(s).", "green bold")
+            self._logger.error(f"The implementation plan contains invalid step data. {exc}")
+            raise RuntimeError(f"The implementation plan contains invalid step data. {exc}")
         return proposed_steps
 
     @staticmethod

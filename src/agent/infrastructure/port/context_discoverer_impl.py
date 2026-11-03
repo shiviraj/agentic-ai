@@ -10,7 +10,7 @@ from agent.domain.vo.requirement_analysis_result import RequirementAnalysisResul
 from agent.infrastructure.prompt import PROJECT_DISCOVERY_PROMPT
 from agent.infrastructure.schema import FINISH_DISCOVERY_EXECUTION
 from agent.infrastructure.tool_registry import ToolRegistry
-from agent.infrastructure.tool_step_executor import MAX_ITERATIONS
+from agent.infrastructure.tool_step_executor import MAX_ITERATIONS, MAX_INVALID_RESPONSES
 from agent.shared.logger.Logger import Logger
 
 
@@ -29,25 +29,19 @@ class ContextDiscovererImpl(ContextDiscoverer):
             tool_executor: ToolExecutor
     ) -> ProjectContext:
         finish_name = FINISH_DISCOVERY_EXECUTION["function"]["name"]
-
-        discovery_tools = [
-            *self._tool_registry.discovery_tools_definition,
-            FINISH_DISCOVERY_EXECUTION,
-        ]
+        discovery_tools = [*self._tool_registry.discovery_tools_definition, FINISH_DISCOVERY_EXECUTION]
 
         allowed_tools = {
             definition["function"]["name"]
             for definition in self._tool_registry.discovery_tools_definition
         }
 
+        prompt_format = PROJECT_DISCOVERY_PROMPT.format(
+            context_request=analysis_result.context_request,
+            requirement=prompt.value
+        )
         messages = [
-            {
-                "role": "system",
-                "content": PROJECT_DISCOVERY_PROMPT.format(
-                    context_request=analysis_result.context_request,
-                    requirement=prompt.value,
-                ),
-            },
+            {"role": "system", "content": prompt_format},
             {"role": "user", "content": prompt.value},
         ]
 
@@ -61,12 +55,10 @@ class ContextDiscovererImpl(ContextDiscoverer):
         # Maps a normalized tool call to its previous result.
         # Repeated calls reuse the result instead of executing again.
         executed_calls: dict[str, str] = {}
-
         invalid_responses = 0
-        max_invalid_responses = 3
 
         for iteration in range(MAX_ITERATIONS):
-            with self._logger.status("Discovering context...", "bouncingBar", "cyan"):
+            with self._logger.status("Discovering context...", "bouncingBar"):
                 response = self._client.chat(
                     model=self._model,
                     messages=messages,
@@ -77,16 +69,13 @@ class ContextDiscovererImpl(ContextDiscoverer):
             message = response.message
             tool_calls = message.tool_calls or []
 
-            self._logger.log(f"Discovery iteration {iteration + 1}: {len(tool_calls)} tool call(s)", "dim")
+            self._logger.debug(
+                f"Discovery iteration {iteration + 1}: {len(tool_calls)} tool call(s), message: {message}")
 
             # Require exactly one tool call per model response.
             if len(tool_calls) != 1:
                 invalid_responses += 1
-
-                messages.append({
-                    "role": "assistant",
-                    "content": message.content or "",
-                })
+                messages.append({"role": "assistant", "content": message.content or ""})
                 messages.append({
                     "role": "user",
                     "content": (
@@ -98,53 +87,23 @@ class ContextDiscovererImpl(ContextDiscoverer):
                     ),
                 })
 
-                if invalid_responses >= max_invalid_responses:
-                    raise RuntimeError(
-                        "Discovery model repeatedly returned responses "
-                        "without exactly one tool call."
-                    )
-
+                if invalid_responses > MAX_INVALID_RESPONSES:
+                    self._logger.error("Discovery model repeatedly returned responses without exactly one tool call.")
+                    raise RuntimeError("Discovery model repeatedly returned responses without exactly one tool call.")
                 continue
 
             tool_call = tool_calls[0]
             function = tool_call.function
 
             # Support attribute-based and dictionary-shaped tool calls.
-            name = function.name if hasattr(function, "name") else function["name"]
-            arguments = function.arguments if hasattr(function, "arguments") else function.get("arguments", {})
-
-            if isinstance(arguments, str):
-                try:
-                    arguments = json.loads(arguments)
-                except json.JSONDecodeError:
-                    arguments = None
+            name = function["name"]
+            arguments = function.get("arguments", {})
 
             # Preserve the assistant message containing the tool call.
             messages.append(message)
 
-            # Validate arguments before executing any tool.
-            if not isinstance(arguments, dict):
-                result_content = json.dumps(
-                    {"success": False, "error": f"Invalid arguments for tool {name!r}. Expected a JSON object."}
-                )
-
-                messages.append({"role": "tool", "name": name, "content": result_content})
-                continue
-
             # Handle the terminal tool separately.
             if name == finish_name:
-                reason = arguments.get("reason")
-
-                if not isinstance(reason, str) or not reason.strip():
-                    messages.append({
-                        "role": "tool",
-                        "name": name,
-                        "content": json.dumps(
-                            {"success": False, "error": "A non-empty completion reason is required."}
-                        ),
-                    })
-                    continue
-
                 if not successful_evidence:
                     messages.append({
                         "role": "tool",
@@ -160,30 +119,20 @@ class ContextDiscovererImpl(ContextDiscoverer):
                     })
                     continue
 
-                self._logger.log(f"Discovery completed: {reason}", "green bold")
-
-                return ProjectContext(
-                    findings=findings,
-                    unresolved_questions=unresolved_questions,
-                )
+                return ProjectContext(findings=findings, unresolved_questions=unresolved_questions)
 
             # Only registered discovery tools may execute.
             if name not in allowed_tools:
-                result_content = json.dumps({
-                    "success": False,
-                    "error": f"Tool {name!r} is not permitted during discovery.",
-                })
-
+                result_content = json.dumps(
+                    {"success": False, "error": f"Tool {name!r} is not permitted during discovery."}
+                )
                 messages.append({"role": "tool", "name": name, "content": result_content})
                 continue
 
             # Canonicalize arguments so dictionary key order does not
             # affect duplicate-call detection.
             call_key = json.dumps(
-                {
-                    "tool": name,
-                    "arguments": arguments,
-                },
+                {"tool": name, "arguments": arguments, "version": tool_executor.version},
                 sort_keys=True,
                 separators=(",", ":"),
                 default=str,
@@ -193,11 +142,7 @@ class ContextDiscovererImpl(ContextDiscoverer):
             if call_key in executed_calls:
                 result_content = executed_calls[call_key]
 
-                messages.append({
-                    "role": "tool",
-                    "name": name,
-                    "content": result_content,
-                })
+                messages.append({"role": "tool", "tool_name": name, "content": result_content})
                 messages.append({
                     "role": "user",
                     "content": (
@@ -216,32 +161,25 @@ class ContextDiscovererImpl(ContextDiscoverer):
 
                 if result.success:
                     result_content = json.dumps({"success": True, "data": result.data}, default=str)
-
                     successful_evidence = True
-
                     findings.append(
-                        f"Tool: {name}\n"
-                        f"Arguments: {json.dumps(arguments, default=str)}\n"
-                        f"Result: {result_content}"
+                        f"Tool: {name}\nArguments: {json.dumps(arguments, default=str)}\nResult: {result_content}"
                     )
                 else:
                     error_message = str(result.error)
-
                     result_content = json.dumps({"success": False, "error": error_message})
-
                     unresolved_questions.append(f"Discovery tool {name} failed: {error_message}")
 
             except Exception as exc:
                 result_content = json.dumps({"success": False, "error": str(exc)})
-
                 unresolved_questions.append(f"Discovery tool {name} raised an exception: {exc}")
 
             # Cache both successful and failed results so the same
             # arguments cannot trigger repeated execution.
             executed_calls[call_key] = result_content
-
-            messages.append({"role": "tool", "name": name, "content": result_content})
-
+            messages.append({"role": "tool", "tool_name": name, "content": result_content})
+        self._logger.error(
+            f"Project discovery exceeded {MAX_ITERATIONS} iterations without a valid completion tool call.")
         raise RuntimeError(
             f"Project discovery exceeded {MAX_ITERATIONS} iterations without a valid completion tool call."
         )

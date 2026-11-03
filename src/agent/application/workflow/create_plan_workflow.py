@@ -3,7 +3,6 @@ from agent.application.services.create_proposal_service import CreateProposalSer
 from agent.application.services.discover_context_service import DiscoverContextService
 from agent.domain.aggregate.implementation_plan import ImplementationPlan
 from agent.domain.vo.prompt import Prompt
-from agent.domain.vo.requirement_analysis_result import RequirementAnalysisResult
 from agent.shared.logger.Logger import Logger
 
 
@@ -28,5 +27,5 @@ class CreatePlanWorkflow:
         text = "Implementation plan created\n"
         for step in plan.steps:
             text += f"  {step.sequence}. {step.title}\n"
-        self._logger.log(text)
+        self._logger.info(text)
         return plan

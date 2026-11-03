@@ -30,12 +30,11 @@ class RequirementAnalyzerImpl(RequirementAnalyzer):
                     format=ANALYSIS_SCHEMA,
                     options={"temperature": 0}
                 )
+            self._logger.debug(f"Analyzing requirement result: {response.message.content}")
             result = json.loads(response.message["content"])
             context_request = result["context_request"]
             require_context = cast(bool, result["require_context"])
-
-            self._logger.log("Analysed requirements successfully", "green bold")
             return RequirementAnalysisResult(context_request=context_request, require_context=require_context)
         except (KeyError, TypeError, ValueError) as exc:
-            self._logger.log("Failed to analysing requirements", "red")
-            raise RuntimeError("Ollama returned an invalid analysis proposal.") from exc
+            self._logger.error(f"Failed to analysing requirements: {exc}", "red")
+            raise RuntimeError(f"Ollama returned an invalid analysis proposal: {exc}.")

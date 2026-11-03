@@ -141,9 +141,10 @@ FINISH_STEP_EXECUTION = {
         "name": "finish_step",
         "description": (
             "Terminate the current implementation step after all required "
-            "work has been attempted. Report success, failure, or blocked "
-            "status using actual tool results. This must be the final tool "
-            "call for the current step."
+            "work has been attempted. Report the actual outcome based on "
+            "tool results. This must be the final tool call for the step. "
+            "Never report success unless the required work and validations "
+            "have actually succeeded."
         ),
         "parameters": {
             "type": "object",
@@ -157,34 +158,10 @@ FINISH_STEP_EXECUTION = {
                     "type": "string",
                     "description": "Summary of work completed or why it stopped.",
                 },
-                "validation_results": {
-                    "type": "array",
-                    "items": {"type": "string"},
-                    "description": "Validation commands and their observed results.",
-                },
-                "files_changed": {
-                    "type": "array",
-                    "items": {"type": "string"},
-                    "description": "Files actually changed, based on tool results.",
-                },
-                "errors": {
-                    "type": "array",
-                    "items": {"type": "string"},
-                    "description": "Actual errors encountered.",
-                },
-                "remaining_work": {
-                    "type": "array",
-                    "items": {"type": "string"},
-                    "description": "Work remaining or unresolved issues.",
-                },
             },
             "required": [
                 "status",
                 "summary",
-                "validation_results",
-                "files_changed",
-                "errors",
-                "remaining_work",
             ],
             "additionalProperties": False,
         },
