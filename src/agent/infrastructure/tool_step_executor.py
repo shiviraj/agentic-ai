@@ -10,14 +10,13 @@ from agent.domain.vo.step_result import StepResult
 from agent.infrastructure.prompt import STEP_EXECUTOR_PROMPT
 from agent.infrastructure.schema import FINISH_STEP_EXECUTION
 from agent.infrastructure.tool_registry import ToolRegistry
-from agent.shared.logger.Logger import Logger
+from agent.shared.logger.logger import Logger
 
 MAX_ITERATIONS = 20
 MAX_INVALID_RESPONSES = 5
 
 
 class ToolStepExecutor(StepExecutor):
-
     def __init__(self, client: Client, model: str, tool_registry: ToolRegistry) -> None:
         self._client = client
         self._model = model
@@ -27,10 +26,7 @@ class ToolStepExecutor(StepExecutor):
     def execute(self, step: PlanStep, tool_executor: ToolExecutor, previous_results: list[StepResult]) -> StepResult:
         finish_name = FINISH_STEP_EXECUTION["function"]["name"]
         tools = [*self._tool_registry.tools_definition, FINISH_STEP_EXECUTION]
-        allowed_tools = {
-            definition["function"]["name"]
-            for definition in self._tool_registry.tools_definition
-        }
+        allowed_tools = {definition["function"]["name"] for definition in self._tool_registry.tools_definition}
 
         previous_context = self._serialize_previous_results(previous_results)
 
@@ -39,8 +35,9 @@ class ToolStepExecutor(StepExecutor):
                 "role": "system",
                 "content": STEP_EXECUTOR_PROMPT.format(
                     current_step=f"Title: {step.title}\nDescription: {step.description}",
-                    plan_progress=("Execute only the current step. The orchestrator controls progression to "
-                                   "subsequent steps."),
+                    plan_progress=(
+                        "Execute only the current step. The orchestrator controls progression to subsequent steps."
+                    ),
                 ),
             },
             {
@@ -69,28 +66,37 @@ class ToolStepExecutor(StepExecutor):
                 tool_calls = message.tool_calls or []
 
                 self._logger.debug(
-                    f"Discovery iteration {iteration + 1}: {len(tool_calls)} tool call(s), message: {message}")
+                    f"Discovery iteration {iteration + 1}: {len(tool_calls)} tool call(s), message: {message}"
+                )
 
                 if len(tool_calls) != 1:
                     invalid_responses += 1
 
                     if not tool_calls:
-                        messages.append({"role": "assistant", "content": message.content or "", })
+                        messages.append(
+                            {
+                                "role": "assistant",
+                                "content": message.content or "",
+                            }
+                        )
 
-                    messages.append({
-                        "role": "user",
-                        "content": (
-                            "Invalid response. You must make exactly ONE "
-                            "actual tool call in this response. Do not "
-                            "return ordinary text. Continue the current "
-                            "step or call finish_step if the step has "
-                            "reached a terminal outcome."
-                        ),
-                    })
+                    messages.append(
+                        {
+                            "role": "user",
+                            "content": (
+                                "Invalid response. You must make exactly ONE "
+                                "actual tool call in this response. Do not "
+                                "return ordinary text. Continue the current "
+                                "step or call finish_step if the step has "
+                                "reached a terminal outcome."
+                            ),
+                        }
+                    )
 
                     if invalid_responses >= MAX_INVALID_RESPONSES:
-                        return StepResult(success=False, step=step,
-                                          error="Model repeatedly failed to return exactly one tool call.")
+                        return StepResult(
+                            success=False, step=step, error="Model repeatedly failed to return exactly one tool call."
+                        )
 
                     continue
 
@@ -104,7 +110,13 @@ class ToolStepExecutor(StepExecutor):
 
                 if not isinstance(arguments, dict):
                     result_content = json.dumps({"success": False, "error": "Tool arguments must be a JSON object."})
-                    messages.append({"role": "tool", "tool_name": name, "content": result_content, })
+                    messages.append(
+                        {
+                            "role": "tool",
+                            "tool_name": name,
+                            "content": result_content,
+                        }
+                    )
                     continue
 
                 # The finish tool terminates this step and is never
@@ -114,8 +126,19 @@ class ToolStepExecutor(StepExecutor):
 
                 # Prevent unregistered tools from being executed.
                 if name not in allowed_tools:
-                    result_content = json.dumps({"success": False, "error": f"Tool {name!r} is not registered.", })
-                    messages.append({"role": "tool", "tool_name": name, "content": result_content, })
+                    result_content = json.dumps(
+                        {
+                            "success": False,
+                            "error": f"Tool {name!r} is not registered.",
+                        }
+                    )
+                    messages.append(
+                        {
+                            "role": "tool",
+                            "tool_name": name,
+                            "content": result_content,
+                        }
+                    )
                     continue
 
                 call_key = json.dumps(
@@ -129,16 +152,18 @@ class ToolStepExecutor(StepExecutor):
                 if call_key in executed_calls:
                     result_content = executed_calls[call_key]
                     messages.append({"role": "tool", "tool_name": name, "content": result_content})
-                    messages.append({
-                        "role": "user",
-                        "content": (
-                            "You repeated an identical tool call. Its result is already "
-                            "available above. Do not call it again. Choose a different "
-                            "registered tool that provides missing information, or call "
-                            f"{finish_name} if the step is complete. "
-                            "You must make exactly one native tool call."
-                        ),
-                    })
+                    messages.append(
+                        {
+                            "role": "user",
+                            "content": (
+                                "You repeated an identical tool call. Its result is already "
+                                "available above. Do not call it again. Choose a different "
+                                "registered tool that provides missing information, or call "
+                                f"{finish_name} if the step is complete. "
+                                "You must make exactly one native tool call."
+                            ),
+                        }
+                    )
                     continue
 
                 # Execute each distinct tool call at most once.
@@ -155,14 +180,22 @@ class ToolStepExecutor(StepExecutor):
                         default=str,
                     )
                 except Exception as exc:
-                    result_content = json.dumps({"success": False, "error": str(exc), })
+                    result_content = json.dumps(
+                        {
+                            "success": False,
+                            "error": str(exc),
+                        }
+                    )
 
                 executed_calls[call_key] = result_content
 
                 messages.append({"role": "tool", "tool_name": name, "content": result_content})
 
-            return StepResult(success=False, step=step, error=(
-                f"Step exceeded the maximum of {MAX_ITERATIONS} " "LLM iterations without a finish_step call."), )
+            return StepResult(
+                success=False,
+                step=step,
+                error=(f"Step exceeded the maximum of {MAX_ITERATIONS} LLM iterations without a finish_step call."),
+            )
 
         except Exception as exc:
             return StepResult(success=False, step=step, error=str(exc))
@@ -173,10 +206,18 @@ class ToolStepExecutor(StepExecutor):
         summary = arguments.get("summary")
 
         if status not in {"success", "failure", "blocked"}:
-            return StepResult(success=False, step=step, error="finish_step returned an invalid status.", )
+            return StepResult(
+                success=False,
+                step=step,
+                error="finish_step returned an invalid status.",
+            )
 
         if not isinstance(summary, str) or not summary.strip():
-            return StepResult(success=False, step=step, error="finish_step must provide a non-empty summary.", )
+            return StepResult(
+                success=False,
+                step=step,
+                error="finish_step must provide a non-empty summary.",
+            )
 
         data = {"status": status, "summary": summary}
 
@@ -190,14 +231,16 @@ class ToolStepExecutor(StepExecutor):
         results = []
 
         for result in previous_results:
-            results.append({
-                "step": {
-                    "title": result.step.title,
-                    "description": result.step.description,
-                },
-                "success": result.success,
-                "data": result.data,
-                "error": result.error,
-            })
+            results.append(
+                {
+                    "step": {
+                        "title": result.step.title,
+                        "description": result.step.description,
+                    },
+                    "success": result.success,
+                    "data": result.data,
+                    "error": result.error,
+                }
+            )
 
         return json.dumps(results, indent=2, default=str)

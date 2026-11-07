@@ -10,35 +10,43 @@ from agent.domain.vo.requirement_analysis_result import RequirementAnalysisResul
 from agent.infrastructure.prompt import PROJECT_DISCOVERY_PROMPT
 from agent.infrastructure.schema import FINISH_DISCOVERY_EXECUTION
 from agent.infrastructure.tool_registry import ToolRegistry
-from agent.infrastructure.tool_step_executor import MAX_ITERATIONS, MAX_INVALID_RESPONSES
-from agent.shared.logger.Logger import Logger
+from agent.infrastructure.tool_step_executor import (
+    MAX_INVALID_RESPONSES,
+    MAX_ITERATIONS,
+)
+from agent.shared.logger.logger import Logger
 
 
 class ContextDiscovererImpl(ContextDiscoverer):
-
-    def __init__(self, client: Client, model: str, tool_registry: ToolRegistry, ) -> None:
+    def __init__(
+        self,
+        client: Client,
+        model: str,
+        tool_registry: ToolRegistry,
+    ) -> None:
         self._client = client
         self._model = model
         self._tool_registry = tool_registry
         self._logger = Logger("ContextDiscovererImpl")
 
     def discover(
-            self,
-            analysis_result: RequirementAnalysisResult,
-            prompt: Prompt,
-            tool_executor: ToolExecutor
+        self,
+        analysis_result: RequirementAnalysisResult,
+        prompt: Prompt,
+        tool_executor: ToolExecutor,
     ) -> ProjectContext:
         finish_name = FINISH_DISCOVERY_EXECUTION["function"]["name"]
-        discovery_tools = [*self._tool_registry.discovery_tools_definition, FINISH_DISCOVERY_EXECUTION]
+        discovery_tools = [
+            *self._tool_registry.discovery_tools_definition,
+            FINISH_DISCOVERY_EXECUTION,
+        ]
 
         allowed_tools = {
-            definition["function"]["name"]
-            for definition in self._tool_registry.discovery_tools_definition
+            definition["function"]["name"] for definition in self._tool_registry.discovery_tools_definition
         }
 
         prompt_format = PROJECT_DISCOVERY_PROMPT.format(
-            context_request=analysis_result.context_request,
-            requirement=prompt.value
+            context_request=analysis_result.context_request, requirement=prompt.value
         )
         messages = [
             {"role": "system", "content": prompt_format},
@@ -70,22 +78,25 @@ class ContextDiscovererImpl(ContextDiscoverer):
             tool_calls = message.tool_calls or []
 
             self._logger.debug(
-                f"Discovery iteration {iteration + 1}: {len(tool_calls)} tool call(s), message: {message}")
+                f"Discovery iteration {iteration + 1}: {len(tool_calls)} tool call(s), message: {message}"
+            )
 
             # Require exactly one tool call per model response.
             if len(tool_calls) != 1:
                 invalid_responses += 1
                 messages.append({"role": "assistant", "content": message.content or ""})
-                messages.append({
-                    "role": "user",
-                    "content": (
-                        "Invalid response: you must call exactly one "
-                        "available tool. Do not write a report as text. "
-                        "Continue discovery or call the registered "
-                        f"{finish_name} tool when sufficient evidence "
-                        "has been collected."
-                    ),
-                })
+                messages.append(
+                    {
+                        "role": "user",
+                        "content": (
+                            "Invalid response: you must call exactly one "
+                            "available tool. Do not write a report as text. "
+                            "Continue discovery or call the registered "
+                            f"{finish_name} tool when sufficient evidence "
+                            "has been collected."
+                        ),
+                    }
+                )
 
                 if invalid_responses > MAX_INVALID_RESPONSES:
                     self._logger.error("Discovery model repeatedly returned responses without exactly one tool call.")
@@ -105,18 +116,22 @@ class ContextDiscovererImpl(ContextDiscoverer):
             # Handle the terminal tool separately.
             if name == finish_name:
                 if not successful_evidence:
-                    messages.append({
-                        "role": "tool",
-                        "name": name,
-                        "content": json.dumps({
-                            "success": False,
-                            "error": (
-                                "No successful discovery evidence has "
-                                "been collected. Continue with an available "
-                                "discovery tool or report the blocker."
+                    messages.append(
+                        {
+                            "role": "tool",
+                            "name": name,
+                            "content": json.dumps(
+                                {
+                                    "success": False,
+                                    "error": (
+                                        "No successful discovery evidence has "
+                                        "been collected. Continue with an available "
+                                        "discovery tool or report the blocker."
+                                    ),
+                                }
                             ),
-                        }),
-                    })
+                        }
+                    )
                     continue
 
                 return ProjectContext(findings=findings, unresolved_questions=unresolved_questions)
@@ -124,7 +139,10 @@ class ContextDiscovererImpl(ContextDiscoverer):
             # Only registered discovery tools may execute.
             if name not in allowed_tools:
                 result_content = json.dumps(
-                    {"success": False, "error": f"Tool {name!r} is not permitted during discovery."}
+                    {
+                        "success": False,
+                        "error": f"Tool {name!r} is not permitted during discovery.",
+                    }
                 )
                 messages.append({"role": "tool", "name": name, "content": result_content})
                 continue
@@ -132,7 +150,11 @@ class ContextDiscovererImpl(ContextDiscoverer):
             # Canonicalize arguments so dictionary key order does not
             # affect duplicate-call detection.
             call_key = json.dumps(
-                {"tool": name, "arguments": arguments, "version": tool_executor.version},
+                {
+                    "tool": name,
+                    "arguments": arguments,
+                    "version": tool_executor.version,
+                },
                 sort_keys=True,
                 separators=(",", ":"),
                 default=str,
@@ -143,15 +165,17 @@ class ContextDiscovererImpl(ContextDiscoverer):
                 result_content = executed_calls[call_key]
 
                 messages.append({"role": "tool", "tool_name": name, "content": result_content})
-                messages.append({
-                    "role": "user",
-                    "content": (
-                        "This exact tool call was already executed. "
-                        "Use its returned result and choose a different "
-                        "action, or finish discovery if sufficient "
-                        "evidence has been collected."
-                    ),
-                })
+                messages.append(
+                    {
+                        "role": "user",
+                        "content": (
+                            "This exact tool call was already executed. "
+                            "Use its returned result and choose a different "
+                            "action, or finish discovery if sufficient "
+                            "evidence has been collected."
+                        ),
+                    }
+                )
                 continue
 
             # Execute the registered tool.
@@ -179,7 +203,8 @@ class ContextDiscovererImpl(ContextDiscoverer):
             executed_calls[call_key] = result_content
             messages.append({"role": "tool", "tool_name": name, "content": result_content})
         self._logger.error(
-            f"Project discovery exceeded {MAX_ITERATIONS} iterations without a valid completion tool call.")
+            f"Project discovery exceeded {MAX_ITERATIONS} iterations without a valid completion tool call."
+        )
         raise RuntimeError(
             f"Project discovery exceeded {MAX_ITERATIONS} iterations without a valid completion tool call."
         )

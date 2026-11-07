@@ -1,9 +1,12 @@
 import os
 from pathlib import Path
+
 from ollama import Client
 from prompt_toolkit import PromptSession
 
-from agent.application.services.analyze_requirement_service import AnalyzeRequirementService
+from agent.application.services.analyze_requirement_service import (
+    AnalyzeRequirementService,
+)
 from agent.application.services.create_proposal_service import CreateProposalService
 from agent.application.services.discover_context_service import DiscoverContextService
 from agent.application.services.execute_plan import ExecutePlan
@@ -22,14 +25,14 @@ from agent.infrastructure.port.requirement_analyzer_impl import RequirementAnaly
 from agent.infrastructure.prompt import PROMPT_INSTRUCTIONS
 from agent.infrastructure.tool_step_executor import ToolStepExecutor
 from agent.interface.cli.prompt_input import create_prompt_session, user_prompt
-from agent.shared.logger.Logger import Logger
+from agent.shared.logger.logger import Logger
 
 
 def main() -> None:
     client = Client(host=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"), timeout=180)
-    model = os.getenv("OLLAMA_MODEL", "qwen3:8b")
+    model = os.getenv("OLLAMA_MODEL", "llama3.2:latest")
     logger = Logger("Main")
-    registry = create_tool_registry(Path('workspace'))
+    registry = create_tool_registry(Path("workspace"))
 
     tool_executor = ToolExecutor(ToolApprovalPolicy(), CliApprovalGateway())
 
@@ -48,9 +51,7 @@ def main() -> None:
     execute_plan = ExecutePlan(step_executor, tool_executor)
 
     create_plan_workflow = CreatePlanWorkflow(
-        analyze_requirement_service,
-        discover_context_service,
-        create_proposal_service
+        analyze_requirement_service, discover_context_service, create_proposal_service
     )
     execute_plan_workflow = ExecutePlanWorkflow(execute_plan)
     workflow = ProcessPromptWorkflow(create_plan_workflow, execute_plan_workflow)
@@ -69,7 +70,7 @@ def main() -> None:
             try:
                 workflow.execute(prompt)
             except KeyboardInterrupt:
-                logger.info("Request interrupted.", 'yellow')
+                logger.info("Request interrupted.", "yellow")
             except Exception as exc:
                 logger.info(f"Failed to process the request. {exc}", "bold red")
 

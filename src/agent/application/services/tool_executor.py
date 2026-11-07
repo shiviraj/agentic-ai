@@ -3,7 +3,7 @@ from agent.application.tool.tool import Tool
 from agent.domain.policy.tool_approval_policy import ToolApprovalPolicy
 from agent.domain.vo.approval_decision import ApprovalDecision
 from agent.domain.vo.tool_result import ToolResult
-from agent.shared.logger.Logger import Logger
+from agent.shared.logger.logger import Logger
 
 
 class ToolExecutor:
@@ -16,7 +16,8 @@ class ToolExecutor:
     def execute(self, tool: Tool, arguments: dict[str, object]) -> ToolResult:
         decision = self._policy.decide(tool.tool_risk)
         self._logger.debug(
-            f"Tool executing started:\n\tTool: {tool.display_name}, arguments: {tool.display_arguments(arguments)}, decision: {decision}")
+            f"Tool executing started:\n\tTool: {tool.display_name}, arguments: {tool.display_arguments(arguments)}, decision: {decision}"
+        )
         if decision == ApprovalDecision.DENY:
             return ToolResult(success=False, error="Tool operation is denied.")
 

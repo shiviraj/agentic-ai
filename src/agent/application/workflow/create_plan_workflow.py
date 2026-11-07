@@ -3,15 +3,15 @@ from agent.application.services.create_proposal_service import CreateProposalSer
 from agent.application.services.discover_context_service import DiscoverContextService
 from agent.domain.aggregate.implementation_plan import ImplementationPlan
 from agent.domain.vo.prompt import Prompt
-from agent.shared.logger.Logger import Logger
+from agent.shared.logger.logger import Logger
 
 
 class CreatePlanWorkflow:
     def __init__(
-            self,
-            analyze_requirement_service: AnalyzeRequirementService,
-            discover_context_service: DiscoverContextService,
-            create_proposal_service: CreateProposalService,
+        self,
+        analyze_requirement_service: AnalyzeRequirementService,
+        discover_context_service: DiscoverContextService,
+        create_proposal_service: CreateProposalService,
     ) -> None:
         self._analyze_requirement_service = analyze_requirement_service
         self._discover_context_service = discover_context_service

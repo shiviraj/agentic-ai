@@ -8,14 +8,14 @@ from agent.domain.vo.project_context import ProjectContext
 from agent.domain.vo.prompt import Prompt
 from agent.infrastructure.prompt import PLAN_PROMPT
 from agent.infrastructure.schema import PLAN_SCHEMA
-from agent.shared.logger.Logger import Logger
+from agent.shared.logger.logger import Logger
 
 
 class ProposalCreatorImpl(ProposalCreator):
     def __init__(self, client: Client, model: str) -> None:
         self._client = client
         self._model = model
-        self._logger = Logger('ProposalCreatorImpl')
+        self._logger = Logger("ProposalCreatorImpl")
 
     def create(self, prompt: Prompt, context: ProjectContext | None) -> list[PlanStep]:
         context_content = self._serialize_context(context)

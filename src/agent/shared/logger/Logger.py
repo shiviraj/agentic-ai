@@ -29,10 +29,20 @@ class Logger:
     def info(self, message: str, tag: str = "green") -> None:
         self._console.print(self._get_message(message, tag, LogLevel.INFO))
 
-    def status(self, message: str, spinner: str, tag: str = "cyan", level: LogLevel = LogLevel.INFO) -> Status:
-        return self._console.status(self._get_message(message, tag, level), spinner=spinner)
+    def status(
+        self,
+        message: str,
+        spinner: str,
+        tag: str = "cyan",
+        level: LogLevel = LogLevel.INFO,
+    ) -> Status:
+        return self._console.status(
+            self._get_message(message, tag, level), spinner=spinner
+        )
 
-    def _get_message(self, message: str, tag: str = "", level: LogLevel = LogLevel.INFO) -> str:
+    def _get_message(
+        self, message: str, tag: str = "", level: LogLevel = LogLevel.INFO
+    ) -> str:
         opening_tag = f"[{tag}]" if tag != "" else ""
         closing_tag = f"[/{tag}]" if tag != "" else ""
         return f"{opening_tag}[{self._name}] [{level.title()}] {message}{closing_tag}"

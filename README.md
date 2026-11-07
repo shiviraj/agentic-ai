@@ -9,12 +9,17 @@
 # 5. Explain All Steps till now
 
 1. Analyze requirement 
-2. Discover context 
-3. Summarize context
-4. Create implementation plan
-5. Execute plan
+2. Discover context
+3. Create implementation plan
+4. Execute plan
+   1. Execute Plan Step
+      
+      Relevant tool calls 
+      
 
 # 6. Future plans
+- Implement RAG
+- Implement MCP
 
 # 7. code walkthrough Top level
 ### How python code interacts with llm

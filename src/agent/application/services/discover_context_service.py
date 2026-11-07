@@ -4,15 +4,15 @@ from agent.domain.policy.context_discover_policy import ContextDiscoverPolicy
 from agent.domain.vo.project_context import ProjectContext
 from agent.domain.vo.prompt import Prompt
 from agent.domain.vo.requirement_analysis_result import RequirementAnalysisResult
-from agent.shared.logger.Logger import Logger
+from agent.shared.logger.logger import Logger
 
 
 class DiscoverContextService:
     def __init__(
-            self,
-            context_discoverer: ContextDiscoverer,
-            context_discover_policy: ContextDiscoverPolicy,
-            tool_executor: ToolExecutor
+        self,
+        context_discoverer: ContextDiscoverer,
+        context_discover_policy: ContextDiscoverPolicy,
+        tool_executor: ToolExecutor,
     ) -> None:
         self._context_discoverer = context_discoverer
         self._context_discover_policy = context_discover_policy
