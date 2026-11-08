@@ -1,63 +1,39 @@
 import os
-from pathlib import Path
 
 from ollama import Client
 from prompt_toolkit import PromptSession
 
-from agent.application.services.analyze_requirement_service import (
-    AnalyzeRequirementService,
-)
-from agent.application.services.create_proposal_service import CreateProposalService
-from agent.application.services.discover_context_service import DiscoverContextService
-from agent.application.services.execute_plan import ExecutePlan
-from agent.application.services.tool_executor import ToolExecutor
-from agent.application.workflow.create_plan_workflow import CreatePlanWorkflow
-from agent.application.workflow.execute_plan_workflow import ExecutePlanWorkflow
-from agent.application.workflow.progress_prompt_workflow import ProcessPromptWorkflow
-from agent.domain.policy.context_discover_policy import ContextDiscoverPolicy
-from agent.domain.policy.requirement_analysis_policy import RequirementAnalysisPolicy
-from agent.domain.policy.tool_approval_policy import ToolApprovalPolicy
-from agent.infrastructure.cli_approval_gateway import CliApprovalGateway
-from agent.infrastructure.create_tool_registry import create_tool_registry
-from agent.infrastructure.port.context_discoverer_impl import ContextDiscovererImpl
-from agent.infrastructure.port.proposal_creator_impl import ProposalCreatorImpl
-from agent.infrastructure.port.requirement_analyzer_impl import RequirementAnalyzerImpl
+from agent.application.manager.manager_service import ManagerService
+from agent.application.manager.retry_policy import RetryPolicy
+from agent.domain.task.task import Task
+from agent.domain.task.task_id import TaskId
+from agent.infrastructure.agents.task_planner_agent import TaskPlannerAgent
+from agent.infrastructure.llm.llm_client_impl import LLMClientImpl
+from agent.infrastructure.persistence.task_repository import InMemoryTaskRepository
 from agent.infrastructure.prompt import PROMPT_INSTRUCTIONS
-from agent.infrastructure.tool_step_executor import ToolStepExecutor
+from agent.interface.cli.console_user_interaction import CLIUserInteraction
 from agent.interface.cli.prompt_input import create_prompt_session, user_prompt
 from agent.shared.logger.logger import Logger
 
 
 def main() -> None:
-    client = Client(host=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"), timeout=180)
-    model = os.getenv("OLLAMA_MODEL", "llama3.2:latest")
     logger = Logger("Main")
-    registry = create_tool_registry(Path("workspace"))
+    model = os.getenv("MODEL", "llama3.2:latest")
+    host = os.getenv("API_URL", "http://localhost:11434")
+    timeout = int(os.getenv("TIMEOUT", "60"))
 
-    tool_executor = ToolExecutor(ToolApprovalPolicy(), CliApprovalGateway())
-
-    step_executor = ToolStepExecutor(client, model, registry)
-    requirement_analyzer = RequirementAnalyzerImpl(client=client, model=model)
-    context_discoverer = ContextDiscovererImpl(client=client, model=model, tool_registry=registry)
-    proposal_creator = ProposalCreatorImpl(client=client, model=model)
-
-    requirement_analysis_policy = RequirementAnalysisPolicy()
-    context_discover_policy = ContextDiscoverPolicy()
-
-    analyze_requirement_service = AnalyzeRequirementService(requirement_analyzer, requirement_analysis_policy)
-    discover_context_service = DiscoverContextService(context_discoverer, context_discover_policy, tool_executor)
-    create_proposal_service = CreateProposalService(proposal_creator)
-
-    execute_plan = ExecutePlan(step_executor, tool_executor)
-
-    create_plan_workflow = CreatePlanWorkflow(
-        analyze_requirement_service, discover_context_service, create_proposal_service
-    )
-    execute_plan_workflow = ExecutePlanWorkflow(execute_plan)
-    workflow = ProcessPromptWorkflow(create_plan_workflow, execute_plan_workflow)
+    client = Client(host=host, timeout=timeout)
+    llm_client = LLMClientImpl(client=client, model=model)
 
     session: PromptSession[str] = create_prompt_session()
     logger.info(PROMPT_INSTRUCTIONS, "cyan")
+
+    manager_service = ManagerService(
+        agents=[TaskPlannerAgent(llm=llm_client)],
+        repository=InMemoryTaskRepository(),
+        user=CLIUserInteraction(),
+        policy=RetryPolicy(),
+    )
 
     try:
         while True:
@@ -68,7 +44,8 @@ def main() -> None:
             if not prompt:
                 continue
             try:
-                workflow.execute(prompt)
+                task = Task(id=TaskId.generate(), prompt=prompt)
+                manager_service.run(task)
             except KeyboardInterrupt:
                 logger.info("Request interrupted.", "yellow")
             except Exception as exc:

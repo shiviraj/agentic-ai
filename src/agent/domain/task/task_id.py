@@ -8,6 +8,6 @@ from agent.shared.domain.vo import ValueObject
 class TaskId(ValueObject):
     value: UUID
 
-    @classmethod
-    def generate(cls) -> "TaskId":
-        return cls(value=uuid4())
+    @staticmethod
+    def generate() -> "TaskId":
+        return TaskId(value=uuid4())

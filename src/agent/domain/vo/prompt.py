@@ -10,3 +10,5 @@ class Prompt(ValueObject):
     def __post_init__(self) -> None:
         if not self.value.strip():
             raise ValueError("Prompt cannot be empty")
+        if len(self.value.strip()) > 3000:
+            raise ValueError("Prompt is too long")

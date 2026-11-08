@@ -7,6 +7,11 @@ authors = [{ name = "Shivam Rajput", email = "example@email.com" }]
 requires-python = ">=3.14"
 dependencies = ["ollama>=0.6.3", "prompt-toolkit>=3.0.53", "rich>=15.0.0"]
 
+
+[tool.pytest.ini_options]
+pythonpath = ["src", "."]
+testpaths = ["tests"]
+
 [project.scripts]
 agent = "agent:main"
 

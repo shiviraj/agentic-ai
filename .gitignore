@@ -13,3 +13,4 @@ wheels/
 .vscode/
 .agent_history
 workspace/
+.env

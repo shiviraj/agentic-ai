@@ -1,3 +1,4 @@
+from datetime import datetime
 from enum import Enum
 
 from rich.console import Console
@@ -36,13 +37,9 @@ class Logger:
         tag: str = "cyan",
         level: LogLevel = LogLevel.INFO,
     ) -> Status:
-        return self._console.status(
-            self._get_message(message, tag, level), spinner=spinner
-        )
+        return self._console.status(self._get_message(message, tag, level), spinner=spinner)
 
-    def _get_message(
-        self, message: str, tag: str = "", level: LogLevel = LogLevel.INFO
-    ) -> str:
+    def _get_message(self, message: str, tag: str = "", level: LogLevel = LogLevel.INFO) -> str:
         opening_tag = f"[{tag}]" if tag != "" else ""
         closing_tag = f"[/{tag}]" if tag != "" else ""
-        return f"{opening_tag}[{self._name}] [{level.title()}] {message}{closing_tag}"
+        return f"{opening_tag} {datetime.now()} {self._name} | {level.title()}\t{message}{closing_tag}"

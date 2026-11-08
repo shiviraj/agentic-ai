@@ -1,5 +1,5 @@
-from abc import abstractmethod, ABC, abstractproperty
-from typing import TypeVar, Generic
+from abc import ABC, abstractmethod
+from typing import Generic, TypeVar
 
 from agent.domain.vo.tool_result import ToolResult
 from agent.domain.vo.tool_risk import ToolRisk
@@ -8,30 +8,28 @@ ArgsT = TypeVar("ArgsT")
 
 
 class Tool(ABC, Generic[ArgsT]):
-    @abstractproperty
-    def name(self) -> str:
-        ...
+    @property
+    @abstractmethod
+    def name(self) -> str: ...
 
-    @abstractproperty
-    def display_name(self) -> str:
-        ...
+    @property
+    @abstractmethod
+    def display_name(self) -> str: ...
 
-    @abstractproperty
-    def description(self) -> str:
-        ...
+    @property
+    @abstractmethod
+    def description(self) -> str: ...
 
-    @abstractproperty
-    def tool_risk(self) -> ToolRisk:
-        ...
+    @property
+    @abstractmethod
+    def tool_risk(self) -> ToolRisk: ...
 
-    @abstractproperty
-    def parameters_schema(self) -> dict[str, object]:
-        ...
+    @property
+    @abstractmethod
+    def parameters_schema(self) -> dict[str, object]: ...
 
     @abstractmethod
-    def display_arguments(self, arguments: ArgsT) -> str | None:
-        ...
+    def display_arguments(self, arguments: ArgsT) -> str | None: ...
 
     @abstractmethod
-    def execute(self, arguments: ArgsT) -> ToolResult:
-        ...
+    def execute(self, arguments: ArgsT) -> ToolResult: ...
