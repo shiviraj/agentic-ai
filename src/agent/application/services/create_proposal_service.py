@@ -1,7 +1,7 @@
 from agent.application.port.proposal_creator import ProposalCreator
 from agent.domain.entity.plan_step import PlanStep
 from agent.domain.vo.project_context import ProjectContext
-from agent.domain.vo.prompt import Prompt
+from agent.domain.vo.user_request import Prompt
 from agent.shared.logger.logger import Logger
 
 

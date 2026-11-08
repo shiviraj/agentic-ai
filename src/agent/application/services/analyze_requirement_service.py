@@ -1,6 +1,6 @@
 from agent.application.port.requirement_analyzer import RequirementAnalyzer
 from agent.domain.policy.requirement_analysis_policy import RequirementAnalysisPolicy
-from agent.domain.vo.prompt import Prompt
+from agent.domain.vo.user_request import Prompt
 from agent.domain.vo.requirement_analysis_result import RequirementAnalysisResult
 from agent.shared.logger.logger import Logger
 

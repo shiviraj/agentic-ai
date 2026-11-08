@@ -24,6 +24,9 @@ class Logger:
         if DEBUG_ENABLED:
             self._console.print(self._get_message(message, tag, LogLevel.DEBUG))
 
+    def warn(self, message: str, tag: str = "yellow") -> None:
+        self._console.print(self._get_message(message, tag, LogLevel.WARNING))
+
     def error(self, message: str, tag: str = "red") -> None:
         self._console.print(self._get_message(message, tag, LogLevel.ERROR))
 
@@ -33,7 +36,7 @@ class Logger:
     def status(
         self,
         message: str,
-        spinner: str,
+        spinner: str = "bouncingBar",
         tag: str = "cyan",
         level: LogLevel = LogLevel.INFO,
     ) -> Status:
@@ -42,4 +45,4 @@ class Logger:
     def _get_message(self, message: str, tag: str = "", level: LogLevel = LogLevel.INFO) -> str:
         opening_tag = f"[{tag}]" if tag != "" else ""
         closing_tag = f"[/{tag}]" if tag != "" else ""
-        return f"{opening_tag} {datetime.now()} {self._name} | {level.title()}\t{message}{closing_tag}"
+        return f"{opening_tag}{datetime.now()} | {level.title()} | {self._name}\t{message}{closing_tag}"

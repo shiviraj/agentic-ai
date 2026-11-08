@@ -4,11 +4,11 @@ from agent.shared.domain.vo import ValueObject
 
 
 @dataclass(frozen=True)
-class Prompt(ValueObject):
+class UserRequest(ValueObject):
     value: str
 
     def __post_init__(self) -> None:
         if not self.value.strip():
-            raise ValueError("Prompt cannot be empty")
+            raise ValueError("User request cannot be empty")
         if len(self.value.strip()) > 3000:
-            raise ValueError("Prompt is too long")
+            raise ValueError("User request is too long")

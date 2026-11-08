@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from agent.domain.vo.prompt import Prompt
+from agent.domain.vo.user_request import Prompt
 from agent.domain.vo.requirement_analysis_result import RequirementAnalysisResult
 
 

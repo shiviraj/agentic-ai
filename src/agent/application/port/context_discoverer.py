@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 from agent.application.services.tool_executor import ToolExecutor
 from agent.domain.vo.project_context import ProjectContext
-from agent.domain.vo.prompt import Prompt
+from agent.domain.vo.user_request import Prompt
 from agent.domain.vo.requirement_analysis_result import RequirementAnalysisResult
 
 

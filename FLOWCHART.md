@@ -5,18 +5,15 @@ flowchart TD
     A([User prompt]) --> B{Validate prompt}
     B -- No --> C[Show error]
     C --> A
-    B -- Yes --> D[Engineer AGENT<br/>Analyze task]
+    B -- Yes --> D[Engineer AGENT<br/>Analyze user request]
+    D -- Conversation --> I[Show response]
+    I --> A
     D -- Query --> E[Query AGENT<br/> Analyze query]
-    E -- Knowledge based --> F[Get answer]
-    F --> G[Summarize answer LLM<br/>Show answer]
-    G -- Loop again --> A
-    E -- Code based --> H[Read code<br/>Read relevant code]
-    H --> G
-    E -- Document based --> J[Read documents]
-    J --> G
+    E --> H[Get context<br/>using tools]
+    H --> J[Summarize using llm]
+    J --> I
     D -- Task --> V[Analyze task]
-    V -- Task --> K[Split into multiple subtasks]
-    V -- Open questions --> E
+    V --> K[Split into multiple subtasks]
     K --> L[Plan next subtask]
     L --> M[Write tests first]
     M --> N[Run tests]
@@ -29,9 +26,6 @@ flowchart TD
     R --> S{Are tests passing}
     S -- Yes --> T[Code review]
     T --> U{is approved}
-    U -- Yes --> G
+    U -- Yes --> J
     U -- No --> K
-
-    D -- Continue to previous --> W[Update with existing context]
-    W --> D
 ```

@@ -2,17 +2,14 @@ import os
 
 from ollama import Client
 from prompt_toolkit import PromptSession
+from rich.console import Console
 
-from agent.application.manager.manager_service import ManagerService
-from agent.application.manager.retry_policy import RetryPolicy
-from agent.domain.task.task import Task
-from agent.domain.task.task_id import TaskId
-from agent.infrastructure.agents.task_planner_agent import TaskPlannerAgent
+from agent.application.agent.engineer_agent_service import EngineerAgentService
+from agent.application.agent.query_agent import QueryAgent
+from agent.infrastructure.agents.engineer_agent_impl import EngineerAgentImpl
 from agent.infrastructure.llm.llm_client_impl import LLMClientImpl
-from agent.infrastructure.persistence.task_repository import InMemoryTaskRepository
 from agent.infrastructure.prompt import PROMPT_INSTRUCTIONS
-from agent.interface.cli.console_user_interaction import CLIUserInteraction
-from agent.interface.cli.prompt_input import create_prompt_session, user_prompt
+from agent.interface.cli.user_input import create_prompt_session, user_request
 from agent.shared.logger.logger import Logger
 
 
@@ -26,26 +23,27 @@ def main() -> None:
     llm_client = LLMClientImpl(client=client, model=model)
 
     session: PromptSession[str] = create_prompt_session()
-    logger.info(PROMPT_INSTRUCTIONS, "cyan")
+    console = Console()
+    console.print(f"[cyan]{PROMPT_INSTRUCTIONS}[/cyan]")
 
-    manager_service = ManagerService(
-        agents=[TaskPlannerAgent(llm=llm_client)],
-        repository=InMemoryTaskRepository(),
-        user=CLIUserInteraction(),
-        policy=RetryPolicy(),
-    )
+    query_agent = QueryAgent()
+    engineer_agent = EngineerAgentImpl(llm_client=llm_client)
+
+    agent = EngineerAgentService(agent=engineer_agent, query_agent=query_agent)
 
     try:
         while True:
-            should_exit, prompt = user_prompt(session)
-            if should_exit:
-                logger.info(prompt.value, "dim")
-                break
-            if not prompt:
-                continue
             try:
-                task = Task(id=TaskId.generate(), prompt=prompt)
-                manager_service.run(task)
+                should_exit, request = user_request(session)
+            except ValueError as e:
+                logger.warn(f"Invalid prompt: {e}")
+                continue
+            if should_exit:
+                logger.info(request.value, "dim")
+                break
+            try:
+                response = agent.run(request)
+                console.print(f"Agent:\t{response}\n")
             except KeyboardInterrupt:
                 logger.info("Request interrupted.", "yellow")
             except Exception as exc:

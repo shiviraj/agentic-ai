@@ -4,7 +4,7 @@ from typing import cast
 from ollama import Client
 
 from agent.application.port.requirement_analyzer import RequirementAnalyzer
-from agent.domain.vo.prompt import Prompt
+from agent.domain.vo.user_request import Prompt
 from agent.domain.vo.requirement_analysis_result import RequirementAnalysisResult
 from agent.infrastructure.prompt import ANALYSE_REQUIREMENT_PROMPT
 from agent.infrastructure.schema import ANALYSIS_SCHEMA

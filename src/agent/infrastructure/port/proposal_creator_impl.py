@@ -5,7 +5,7 @@ from ollama import Client
 from agent.application.port.proposal_creator import ProposalCreator
 from agent.domain.entity.plan_step import PlanStep
 from agent.domain.vo.project_context import ProjectContext
-from agent.domain.vo.prompt import Prompt
+from agent.domain.vo.user_request import Prompt
 from agent.infrastructure.prompt import PLAN_PROMPT
 from agent.infrastructure.schema import PLAN_SCHEMA
 from agent.shared.logger.logger import Logger
