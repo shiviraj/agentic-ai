@@ -3,13 +3,12 @@ from dataclasses import dataclass, field
 from agent.domain.errors import InvalidStatusTransitionError
 from agent.domain.task.task_id import TaskId
 from agent.domain.task.task_status import ALLOWED_TRANSITIONS, TaskStatus
-from agent.domain.vo.prompt import Prompt
 from agent.shared.domain.entity import Entity
 
 
 @dataclass
 class Task(Entity[TaskId]):
-    prompt: Prompt
+    prompt: str
     status: TaskStatus = TaskStatus.ANALYSING
     requirements: str | None = None
     plan: str | None = None
