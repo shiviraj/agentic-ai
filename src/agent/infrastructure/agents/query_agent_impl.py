@@ -18,7 +18,6 @@ class QueryAgentImpl(QueryAgent):
         tools_definitions = [*to_ollama_tools(tools), FINISH_TOOL]
         messages = [Message(Role.SYSTEM, self._system_prompt), *conversation.get_messages()]
         response = self._llm_client.tool(messages=messages, tools=tools_definitions)
-        print(response)
         if response.tools and response.tools[0].name == FINISH_TOOL["function"]["name"]:
             return AnalyzeQueryResult(content=response.tools[0].arguments["content"], tools=[], finished=True)
 

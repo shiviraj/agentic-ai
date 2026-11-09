@@ -1,10 +1,9 @@
 from abc import abstractmethod
 
-from agent.application.service.dto.analyze_query_result import AnalyzeQueryResult
+from agent.application.port.dto.llm_response import ChatResponse
 from agent.domain.aggregate.conversation import Conversation
-from agent.domain.tool.tool import ToolDefinition
 
 
 class SummaryAgent:
     @abstractmethod
-    def run(self, conversation: Conversation, tools: list[ToolDefinition]) -> AnalyzeQueryResult: ...
+    def run(self, conversation: Conversation) -> ChatResponse: ...

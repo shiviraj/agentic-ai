@@ -11,11 +11,13 @@ from rich.console import Console
 
 from agent.application.service.engineer_agent_service import EngineerAgentService
 from agent.application.service.query_agent_service import QueryAgentService
+from agent.application.service.summarize_agent_service import SummarizeAgentService
 from agent.application.service.tool_executor import ToolExecutor
 from agent.domain.aggregate.conversation import Conversation
 from agent.domain.tool.tool_registry import ToolRegistry
 from agent.infrastructure.agents.engineer_agent_impl import EngineerAgentImpl
 from agent.infrastructure.agents.query_agent_impl import QueryAgentImpl
+from agent.infrastructure.agents.summary_agent_impl import SummaryAgentImpl
 from agent.infrastructure.llm.llm_client_impl import LLMClientImpl
 from agent.infrastructure.mcp.tool_provider_impl import ToolProviderImpl
 from agent.infrastructure.persistence.conversation_repository_impl import ConversationRepositoryImpl
@@ -54,9 +56,15 @@ async def main() -> None:
 
     engineer_agent = EngineerAgentImpl(llm_client=llm_client)
     query_agent = QueryAgentImpl(llm_client=llm_client)
+    summary_agent = SummaryAgentImpl(llm_client=llm_client)
 
+    summarize_agent_service = SummarizeAgentService(
+        agent=summary_agent,
+        conversation_repository=conversation_repository,
+    )
     query_agent_service = QueryAgentService(
         agent=query_agent,
+        summarize_agent_service=summarize_agent_service,
         conversation_repository=conversation_repository,
         tool_executor=tool_executor,
         tool_registry=tool_registry,
@@ -76,12 +84,14 @@ async def main() -> None:
                 logger.info(request.value, "dim")
                 break
             try:
-                response = await engineer_agent_service.run(request, conversation.id)
-                console.print(f"Agent:\t{response}\n")
+                conversation.start_interaction(request)
+                response = await engineer_agent_service.run(conversation.id)
+                conversation.stop_interaction(response)
+                console.print(f"\nAgent:\t{response.content}\n")
             except KeyboardInterrupt:
-                logger.info("Request interrupted.", "yellow")
+                logger.warn("Request interrupted.")
             except Exception as exc:
-                logger.info(f"Failed to process the request. {exc}", "bold red")
+                logger.error(f"Failed to process the request. {exc}")
 
     except KeyboardInterrupt:
         pass

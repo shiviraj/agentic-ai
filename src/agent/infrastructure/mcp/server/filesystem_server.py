@@ -23,7 +23,8 @@ def create_server(root: Path) -> FastMCP:
         to the given path. Skips ignored directories such as
         node_modules, .git, dist and build.
 
-        Use this tool first to discover the project structure.
+        - Should not use absolute path
+        - Use only relative path
         """
         try:
             return files.inspect_project(path)

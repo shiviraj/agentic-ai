@@ -36,7 +36,7 @@ class Logger:
     def status(
         self,
         message: str,
-        spinner: str = "bouncingBar",
+        spinner: str = "dots",
         tag: str = "cyan",
         level: LogLevel = LogLevel.INFO,
     ) -> Status:

@@ -5,9 +5,9 @@ from agent.shared.domain.vo import ValueObject
 
 
 @dataclass(frozen=True)
-class StepId(ValueObject):
+class InteractionId(ValueObject):
     value: UUID
 
     @classmethod
-    def generate(cls) -> "StepId":
+    def generate(cls) -> "InteractionId":
         return cls(value=uuid4())
