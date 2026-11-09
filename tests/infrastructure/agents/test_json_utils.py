@@ -1,7 +1,7 @@
 import pytest
+from agent.infrastructure.agents.json_utils import parse_json_object
 
 from agent.domain.errors import InvalidAgentOutputError
-from agent.infrastructure.agents.json_utils import parse_json_object
 
 
 def test_plain_json():

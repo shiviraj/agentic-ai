@@ -1,11 +1,11 @@
 import pytest
-
-from agent.domain.errors import TaskNotFoundError
 from agent.domain.task.task import Task
 from agent.domain.task.task_id import TaskId
 from agent.infrastructure.persistence.task_repository import (
     InMemoryTaskRepository,
 )
+
+from agent.domain.errors import TaskNotFoundError
 
 
 def test_save_and_get():

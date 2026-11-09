@@ -6,10 +6,11 @@ Run:  OLLAMA_MODEL=llama3.1:8b python scripts/try_analyser.py "implement health 
 import os
 import sys
 
-from agent.domain.agent.agent_result import ResultStatus
 from agent.domain.task.task import Task
 from agent.domain.task.task_id import TaskId
 from agent.infrastructure.agents.task_analyser_agent import TaskAnalyserAgent
+
+from agent.domain.agent.agent_result import ResultStatus
 from agent.infrastructure.llm.llm_client_impl import LLMClientImpl
 
 

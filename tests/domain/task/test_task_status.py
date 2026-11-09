@@ -1,5 +1,4 @@
 import pytest
-
 from agent.domain.task.task_status import ALLOWED_TRANSITIONS, TaskStatus, is_terminal
 
 

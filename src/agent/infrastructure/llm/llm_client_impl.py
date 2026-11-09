@@ -4,9 +4,12 @@ from typing import Any
 import httpx
 import ollama
 
+from agent.application.port.dto.llm_response import ChatResponse, ToolResponse
 from agent.application.port.llm_client import LLMClient
 from agent.domain.errors import LlmUnavailableError
 from agent.domain.llm.message import Message
+from agent.domain.tool.tool import ToolCall
+from agent.infrastructure.llm.utils import to_ollama_payload
 
 
 class LLMClientImpl(LLMClient):
@@ -22,16 +25,11 @@ class LLMClientImpl(LLMClient):
         self._temperature = temperature
         self._client = client
 
-    def chat(self, messages: Sequence[Message], schema: dict | None = None) -> str:
-        if not messages:
-            raise ValueError("chat() needs at least one message")
-
-        payload = [{"role": m.role.value, "content": m.content} for m in messages]
-
+    def chat(self, messages: Sequence[Message], schema: dict[str, Any] | None = None) -> ChatResponse:
         try:
             response = self._client.chat(
                 model=self._model,
-                messages=payload,
+                messages=to_ollama_payload(messages),
                 options={
                     "num_ctx": self._num_ctx,
                     "temperature": self._temperature,
@@ -44,18 +42,13 @@ class LLMClientImpl(LLMClient):
         content = response.message.content
         if not content or not content.strip():
             raise LlmUnavailableError(f"Model '{self._model}' returned an empty answer")
-        return content
+        return ChatResponse(content)
 
-    def tool(self, messages: Sequence[Message], tools: list[dict[str, Any]]) -> str:
-        if not messages:
-            raise ValueError("chat() needs at least one message")
-
-        payload = [{"role": m.role.value, "content": m.content} for m in messages]
-
+    def tool(self, messages: Sequence[Message], tools: list[dict[str, Any]]) -> ToolResponse:
         try:
             response = self._client.chat(
                 model=self._model,
-                messages=payload,
+                messages=to_ollama_payload(messages),
                 options={
                     "num_ctx": self._num_ctx,
                     "temperature": self._temperature,
@@ -65,10 +58,9 @@ class LLMClientImpl(LLMClient):
         except (ollama.ResponseError, ConnectionError, httpx.HTTPError) as e:
             raise LlmUnavailableError(f"Ollama call failed for model '{self._model}': {e}") from e
 
-        print("======================================")
-        print(response)
-        print("======================================")
-        # content = response.message.content
-        # if not content or not content.strip():
-        #     raise LlmUnavailableError(f"Model '{self._model}' returned an empty answer")
-        return response
+        content = response.message.content
+        tool_calls = [
+            ToolCall(tool_call.function.name, tool_call.function.arguments)
+            for tool_call in response.message.tool_calls or []
+        ]
+        return ToolResponse(content=content, tools=tool_calls)

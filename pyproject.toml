@@ -46,3 +46,9 @@ disable = [
 line-length = 120
 target-version = "py310"
 src = ["src"]
+
+[tool.mypy]
+python_version = "3.14"
+strict = true
+warn_unused_ignores = true
+show_error_codes = true

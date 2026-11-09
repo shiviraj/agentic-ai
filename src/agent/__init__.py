@@ -19,7 +19,7 @@ from agent.infrastructure.agents.query_agent_impl import QueryAgentImpl
 from agent.infrastructure.llm.llm_client_impl import LLMClientImpl
 from agent.infrastructure.mcp.tool_provider_impl import ToolProviderImpl
 from agent.infrastructure.persistence.conversation_repository_impl import ConversationRepositoryImpl
-from agent.infrastructure.prompt import PROMPT_INSTRUCTIONS
+from agent.infrastructure.prompts.prompt_loader import load_prompt
 from agent.interface.cli.user_input import create_prompt_session, user_request
 from agent.shared.logger.logger import Logger
 
@@ -40,7 +40,7 @@ async def main() -> None:
 
     session: PromptSession[str] = create_prompt_session()
     console = Console()
-    console.print(f"[cyan]{PROMPT_INSTRUCTIONS}[/cyan]")
+    console.print(f"[cyan]{load_prompt('instruction')}[/cyan]")
 
     mcp_client = MCPClient(pathlib.Path("src/agent/infrastructure/mcp/server/filesystem_server.py"))
     exit_stack = AsyncExitStack()
@@ -76,7 +76,7 @@ async def main() -> None:
                 logger.info(request.value, "dim")
                 break
             try:
-                response = engineer_agent_service.run(request, conversation.id)
+                response = await engineer_agent_service.run(request, conversation.id)
                 console.print(f"Agent:\t{response}\n")
             except KeyboardInterrupt:
                 logger.info("Request interrupted.", "yellow")
@@ -89,5 +89,5 @@ async def main() -> None:
         await exit_stack.aclose()
 
 
-def cli():
+def cli() -> None:
     asyncio.run(main())

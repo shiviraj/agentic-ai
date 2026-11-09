@@ -1,7 +1,8 @@
+from agent.domain.task.task import Task
+
 from agent.domain.agent.agent import Agent
 from agent.domain.agent.agent_result import AgentResult
 from agent.domain.agent.agent_role import AgentRole
-from agent.domain.task.task import Task
 
 
 class FakeAgent(Agent):

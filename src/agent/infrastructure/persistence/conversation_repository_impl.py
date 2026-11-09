@@ -1,12 +1,13 @@
+from uuid import UUID
+
 from agent.domain.aggregate.conversation import Conversation
 from agent.domain.repository.conversation_repository import ConversationRepository
-from agent.domain.task.task import Task
 from agent.domain.vo.conversation_id import ConversationId
 
 
 class ConversationRepositoryImpl(ConversationRepository):
     def __init__(self) -> None:
-        self._conversations: dict[str, Task] = {}
+        self._conversations: dict[UUID, Conversation] = {}
 
     def save(self, conversation: Conversation) -> Conversation:
         self._conversations[conversation.id.value] = conversation

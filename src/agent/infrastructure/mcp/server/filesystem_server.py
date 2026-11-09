@@ -5,34 +5,38 @@ from dotenv import load_dotenv
 from fastmcp import FastMCP
 from fastmcp.exceptions import ToolError
 
-from agent.infrastructure.mcp.tool.filesystem_tool import FilesystemToolError, FilesystemTools
+from agent.infrastructure.mcp.tool.filesystem_tool import (
+    FilesystemToolError,
+    FilesystemTools,
+)
 
 
 def create_server(root: Path) -> FastMCP:
     files = FilesystemTools(root)
     server = FastMCP("filesystem")
 
-    # FastMCP builds each tool's name, description and input schema from the
-    # function name, the docstring and the type hints. The LLM reads them.
-
     @server.tool
-    def list_directory(path: str = ".") -> str:
-        """List every file under a folder, including sub-folders, one path per line.
+    def inspect_project(path: str) -> str:
+        """Inspect the project structure.
 
-        Paths are relative to the project root. Skips node_modules, .git, dist
-        and similar folders. Use this first to see how the project is laid out.
-        'path' is the folder to list; it defaults to the project root.
+        Recursively lists all project files using paths relative
+        to the given path. Skips ignored directories such as
+        node_modules, .git, dist and build.
+
+        Use this tool first to discover the project structure.
         """
         try:
-            return files.list_directory(path)
+            return files.inspect_project(path)
         except FilesystemToolError as error:
             raise ToolError(str(error)) from error
 
     @server.tool
     def read_file(path: str) -> str:
-        """Read the full text of one file.
+        """Read the full text content of a project file.
 
-        'path' is relative to the project root, for example 'src/index.ts'.
+        The path must be relative to the project root.
+        Example: 'package.json' or 'src/index.ts'.
+
         Binary files and files larger than 200 KB are refused.
         """
         try:
@@ -44,12 +48,20 @@ def create_server(root: Path) -> FastMCP:
 
 
 def main() -> None:
-    cwd = Path.cwd().resolve()
     load_dotenv()
-    relative_path = os.getenv("WORKSPACE")
-    root = (cwd / relative_path).resolve()
 
-    create_server(root).run()  # stdio is the default transport
+    cwd = Path.cwd().resolve()
+    workspace = os.getenv("WORKSPACE")
+
+    if not workspace:
+        raise RuntimeError("WORKSPACE environment variable is not configured.")
+
+    root = (cwd / workspace).resolve()
+
+    if not root.is_dir():
+        raise RuntimeError(f"Workspace directory does not exist: {root}")
+
+    create_server(root).run()
 
 
 if __name__ == "__main__":

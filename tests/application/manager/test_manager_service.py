@@ -1,17 +1,17 @@
 import pytest
-from tests.fakes.fake_agent import FakeAgent
-from tests.fakes.fake_user_interaction import FakeUserInteraction
-
 from agent.application.manager.manager_service import ManagerService
 from agent.application.manager.retry_policy import RetryPolicy
-from agent.domain.agent.agent_result import AgentResult
-from agent.domain.agent.agent_role import AgentRole
 from agent.domain.task.task import Task
 from agent.domain.task.task_id import TaskId
 from agent.domain.task.task_status import TaskStatus
 from agent.infrastructure.persistence.task_repository import (
     InMemoryTaskRepository,
 )
+from tests.fakes.fake_agent import FakeAgent
+from tests.fakes.fake_user_interaction import FakeUserInteraction
+
+from agent.domain.agent.agent_result import AgentResult
+from agent.domain.agent.agent_role import AgentRole
 
 A, P, C, R, Q = (
     AgentRole.ANALYSER,

@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from typing import Any
 
+from agent.application.port.dto.llm_response import ChatResponse, ToolResponse
 from agent.domain.llm.message import Message
 
 
@@ -9,7 +10,7 @@ class LLMClient(ABC):
     """The only thing the app knows about 'the LLM'."""
 
     @abstractmethod
-    def chat(self, messages: Sequence[Message], schema: dict | None = None) -> str:
+    def chat(self, messages: Sequence[Message], schema: dict[str, Any] | None = None) -> ChatResponse:
         """Send the messages, return the model's text answer.
 
         schema asks the model to answer with valid JSON using schema
@@ -17,7 +18,7 @@ class LLMClient(ABC):
         """
 
     @abstractmethod
-    def tool(self, messages: Sequence[Message], tools: list[dict[str, Any]]) -> str:
+    def tool(self, messages: Sequence[Message], tools: list[dict[str, Any]]) -> ToolResponse:
         """Send the messages, return the model's tool calls.
 
         Raises LlmUnavailableError if the model cannot be used.

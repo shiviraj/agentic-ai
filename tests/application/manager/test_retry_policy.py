@@ -1,5 +1,4 @@
 import pytest
-
 from agent.application.manager.retry_policy import RetryPolicy
 
 

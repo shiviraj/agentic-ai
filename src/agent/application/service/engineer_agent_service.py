@@ -1,5 +1,5 @@
 from agent.application.agent.engineer_agent import EngineerAgent
-from agent.application.service.dto.analyze_result import RequestCategory
+from agent.application.service.dto.analyze_user_request_result import RequestCategory
 from agent.application.service.query_agent_service import QueryAgentService
 from agent.domain.llm.message import Message, Role
 from agent.domain.repository.conversation_repository import ConversationRepository
@@ -20,7 +20,7 @@ class EngineerAgentService:
         self._conversation_repository = conversation_repository
         self._logger = Logger("EngineerAgentService")
 
-    def run(self, request: UserRequest, conversation_id: ConversationId) -> str:
+    async def run(self, request: UserRequest, conversation_id: ConversationId) -> str:
         conversation = self._conversation_repository.find_by_conversation_id(conversation_id)
         conversation.add(Message(Role.USER, request.value))
 
@@ -35,7 +35,7 @@ class EngineerAgentService:
             return analyze_result.response
 
         if analyze_result.category == RequestCategory.QUERY:
-            return self._query_agent_service.run(conversation.id)
+            return await self._query_agent_service.run(conversation.id)
         if analyze_result.category == RequestCategory.TASK:
             return analyze_result.response
         return analyze_result.response

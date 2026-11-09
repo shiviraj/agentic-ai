@@ -1,9 +1,9 @@
 import pytest
-
-from agent.domain.errors import InvalidStatusTransitionError
 from agent.domain.task.task import Task
 from agent.domain.task.task_id import TaskId
 from agent.domain.task.task_status import ALLOWED_TRANSITIONS, TaskStatus
+
+from agent.domain.errors import InvalidStatusTransitionError
 
 
 def make_task_in(status: TaskStatus) -> Task:

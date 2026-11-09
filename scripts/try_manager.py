@@ -11,11 +11,12 @@ from agent.application.manager.manager_service import ManagerService
 from agent.domain.task.task import Task
 from agent.domain.task.task_id import TaskId
 from agent.infrastructure.agents.task_analyser_agent import TaskAnalyserAgent
-from agent.infrastructure.llm.llm_client_impl import LLMClientImpl
 from agent.infrastructure.persistence.task_repository import (
     InMemoryTaskRepository,
 )
 from agent.interface.cli.console_user_interaction import CLIUserInteraction
+
+from agent.infrastructure.llm.llm_client_impl import LLMClientImpl
 
 
 def main() -> None:

@@ -1,8 +1,9 @@
-# agent/infrastructure/agents/field_checks.py
+from typing import Any
+
 from agent.domain.errors import InvalidAgentOutputError
 
 
-def require_str(data: dict, key: str, min_length: int = 1) -> str:
+def require_str(data: dict[str, Any], key: str, min_length: int = 1) -> str:
     value = data.get(key)
     if not isinstance(value, str):
         raise InvalidAgentOutputError(f"'{key}' must be a string")
@@ -11,14 +12,14 @@ def require_str(data: dict, key: str, min_length: int = 1) -> str:
     return value.strip()
 
 
-def require_bool(data: dict, key: str) -> bool:
+def require_bool(data: dict[str, Any], key: str) -> bool:
     value = data.get(key)
     if not isinstance(value, bool):
         raise InvalidAgentOutputError(f"'{key}' must be true or false")
     return value
 
 
-def require_str_list(data: dict, key: str) -> list[str]:
+def require_str_list(data: dict[str, Any], key: str) -> list[str]:
     value = data.get(key)
     if not isinstance(value, list):
         raise InvalidAgentOutputError(f"'{key}' must be a list")

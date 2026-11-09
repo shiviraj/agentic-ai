@@ -1,6 +1,6 @@
 from agent.application.agent.engineer_agent import EngineerAgent
 from agent.application.port.llm_client import LLMClient
-from agent.application.service.dto.analyze_result import AnalyzeUserRequestResult
+from agent.application.service.dto.analyze_user_request_result import AnalyzeUserRequestResult
 from agent.domain.aggregate.conversation import Conversation
 from agent.domain.llm.message import Message, Role
 from agent.infrastructure.agents.parser.analyze_user_request_parser import AnalyzeUserRequestParser
@@ -16,4 +16,4 @@ class EngineerAgentImpl(EngineerAgent):
     def analyze(self, conversation: Conversation) -> AnalyzeUserRequestResult:
         messages = [Message(Role.SYSTEM, self._system_prompt), *conversation.get_messages()]
         response = self._llm_client.chat(messages=messages, schema=self._parser.schema)
-        return self._parser.parse(response)
+        return self._parser.parse(response.content)

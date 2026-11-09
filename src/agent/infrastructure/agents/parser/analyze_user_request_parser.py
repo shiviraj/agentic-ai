@@ -1,6 +1,7 @@
 import json
+from typing import Any
 
-from agent.application.service.dto.analyze_result import AnalyzeUserRequestResult, RequestCategory
+from agent.application.service.dto.analyze_user_request_result import AnalyzeUserRequestResult, RequestCategory
 from agent.domain.errors import InvalidAgentOutputError
 from agent.infrastructure.agents.field_check import require_str
 from agent.infrastructure.agents.parser.output_parser import OutputParser
@@ -8,7 +9,7 @@ from agent.infrastructure.agents.parser.output_parser import OutputParser
 
 class AnalyzeUserRequestParser(OutputParser[AnalyzeUserRequestResult]):
     @property
-    def schema(self) -> dict:
+    def schema(self) -> dict[str, Any]:
         return {
             "type": "object",
             "properties": {

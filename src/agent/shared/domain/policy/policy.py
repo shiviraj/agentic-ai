@@ -1,4 +1,4 @@
-from abc import abstractmethod, ABC
+from abc import ABC, abstractmethod
 from typing import Generic, TypeVar
 
 from agent.shared.domain.policy.policy_result import PolicyResult
