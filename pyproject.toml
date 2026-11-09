@@ -5,7 +5,13 @@ description = "Add your description here"
 readme = "README.md"
 authors = [{ name = "Shivam Rajput", email = "example@email.com" }]
 requires-python = ">=3.14"
-dependencies = ["ollama>=0.6.3", "prompt-toolkit>=3.0.53", "rich>=15.0.0"]
+dependencies = [
+    "fastmcp>=4.1.6",
+    "ollama>=0.6.3",
+    "prompt-toolkit>=3.0.53",
+    "python-dotenv>=1.2.4",
+    "rich>=15.0.0",
+]
 
 
 [tool.pytest.ini_options]
@@ -13,7 +19,7 @@ pythonpath = ["src", "."]
 testpaths = ["tests"]
 
 [project.scripts]
-agent = "agent:main"
+agent = "agent:cli"
 
 [build-system]
 requires = ["uv_build>=0.13.0,<0.14.0"]

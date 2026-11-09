@@ -1,6 +1,6 @@
 import json
 
-from agent.application.agent.dto.analyze_result import AnalyzeUserRequestResult, RequestCategory
+from agent.application.service.dto.analyze_result import AnalyzeUserRequestResult, RequestCategory
 from agent.domain.errors import InvalidAgentOutputError
 from agent.infrastructure.agents.field_check import require_str
 from agent.infrastructure.agents.parser.output_parser import OutputParser

@@ -1,49 +1,74 @@
+import asyncio
 import os
+import pathlib
+from contextlib import AsyncExitStack
 
-from ollama import Client
+from dotenv import load_dotenv
+from fastmcp import Client as MCPClient
+from ollama import Client as OllamaClient
 from prompt_toolkit import PromptSession
 from rich.console import Console
 
-from agent.application.agent.engineer_agent_service import EngineerAgentService
-from agent.application.agent.query_agent import QueryAgent
+from agent.application.service.engineer_agent_service import EngineerAgentService
+from agent.application.service.query_agent_service import QueryAgentService
+from agent.application.service.tool_executor import ToolExecutor
 from agent.domain.aggregate.conversation import Conversation
-from agent.domain.vo.conversation_id import ConversationId
+from agent.domain.tool.tool_registry import ToolRegistry
 from agent.infrastructure.agents.engineer_agent_impl import EngineerAgentImpl
+from agent.infrastructure.agents.query_agent_impl import QueryAgentImpl
 from agent.infrastructure.llm.llm_client_impl import LLMClientImpl
+from agent.infrastructure.mcp.tool_provider_impl import ToolProviderImpl
 from agent.infrastructure.persistence.conversation_repository_impl import ConversationRepositoryImpl
 from agent.infrastructure.prompt import PROMPT_INSTRUCTIONS
 from agent.interface.cli.user_input import create_prompt_session, user_request
 from agent.shared.logger.logger import Logger
 
 
-def main() -> None:
+async def main() -> None:
     logger = Logger("Main")
-    model = os.getenv("MODEL", "llama3.2:latest")
-    host = os.getenv("API_URL", "http://localhost:11434")
+    load_dotenv()
+    model = os.getenv("MODEL")
+    host = os.getenv("API_URL")
     timeout = int(os.getenv("TIMEOUT", "60"))
 
     conversation = Conversation.create()
     conversation_repository = ConversationRepositoryImpl()
     conversation_repository.save(conversation)
 
-    client = Client(host=host, timeout=timeout)
-    llm_client = LLMClientImpl(client=client, model=model)
+    ollama_client = OllamaClient(host=host, timeout=timeout)
+    llm_client = LLMClientImpl(client=ollama_client, model=model)
 
     session: PromptSession[str] = create_prompt_session()
     console = Console()
     console.print(f"[cyan]{PROMPT_INSTRUCTIONS}[/cyan]")
 
-    query_agent = QueryAgent()
-    engineer_agent = EngineerAgentImpl(llm_client=llm_client)
+    mcp_client = MCPClient(pathlib.Path("src/agent/infrastructure/mcp/server/filesystem_server.py"))
+    exit_stack = AsyncExitStack()
+    await exit_stack.enter_async_context(mcp_client)
 
-    agent = EngineerAgentService(
-        agent=engineer_agent, query_agent=query_agent, conversation_repository=conversation_repository
+    tool_registry = ToolRegistry()
+    provider = ToolProviderImpl(client=mcp_client)
+
+    await tool_registry.register_provider(provider=provider)
+    tool_executor = ToolExecutor(registry=tool_registry)
+
+    engineer_agent = EngineerAgentImpl(llm_client=llm_client)
+    query_agent = QueryAgentImpl(llm_client=llm_client)
+
+    query_agent_service = QueryAgentService(
+        agent=query_agent,
+        conversation_repository=conversation_repository,
+        tool_executor=tool_executor,
+        tool_registry=tool_registry,
+    )
+    engineer_agent_service = EngineerAgentService(
+        agent=engineer_agent, query_agent_service=query_agent_service, conversation_repository=conversation_repository
     )
 
     try:
         while True:
             try:
-                should_exit, request = user_request(session)
+                should_exit, request = await user_request(session)
             except ValueError as e:
                 logger.warn(f"Invalid prompt: {e}")
                 continue
@@ -51,7 +76,7 @@ def main() -> None:
                 logger.info(request.value, "dim")
                 break
             try:
-                response = agent.run(request, conversation.id)
+                response = engineer_agent_service.run(request, conversation.id)
                 console.print(f"Agent:\t{response}\n")
             except KeyboardInterrupt:
                 logger.info("Request interrupted.", "yellow")
@@ -60,3 +85,9 @@ def main() -> None:
 
     except KeyboardInterrupt:
         pass
+    finally:
+        await exit_stack.aclose()
+
+
+def cli():
+    asyncio.run(main())

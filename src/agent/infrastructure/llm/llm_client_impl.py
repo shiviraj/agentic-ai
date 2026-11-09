@@ -45,3 +45,30 @@ class LLMClientImpl(LLMClient):
         if not content or not content.strip():
             raise LlmUnavailableError(f"Model '{self._model}' returned an empty answer")
         return content
+
+    def tool(self, messages: Sequence[Message], tools: list[dict[str, Any]]) -> str:
+        if not messages:
+            raise ValueError("chat() needs at least one message")
+
+        payload = [{"role": m.role.value, "content": m.content} for m in messages]
+
+        try:
+            response = self._client.chat(
+                model=self._model,
+                messages=payload,
+                options={
+                    "num_ctx": self._num_ctx,
+                    "temperature": self._temperature,
+                },
+                tools=tools,
+            )
+        except (ollama.ResponseError, ConnectionError, httpx.HTTPError) as e:
+            raise LlmUnavailableError(f"Ollama call failed for model '{self._model}': {e}") from e
+
+        print("======================================")
+        print(response)
+        print("======================================")
+        # content = response.message.content
+        # if not content or not content.strip():
+        #     raise LlmUnavailableError(f"Model '{self._model}' returned an empty answer")
+        return response

@@ -1,7 +1,9 @@
-from agent.domain.vo.user_request import UserRequest
+from abc import abstractmethod
+
+from agent.domain.aggregate.conversation import Conversation
+from agent.domain.tool.tool import ToolDefinition
 
 
 class QueryAgent:
-    def __init__(self): ...
-    def run(self, request: UserRequest) -> None:
-        pass
+    @abstractmethod
+    def run(self, conversation: Conversation, tools: list[ToolDefinition]) -> str: ...

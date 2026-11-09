@@ -3,10 +3,10 @@ import json
 from ollama import Client
 
 from agent.application.port.context_discoverer import ContextDiscoverer
-from agent.application.services.tool_executor import ToolExecutor
+from agent.application.service.tool_executor import ToolExecutor
 from agent.domain.vo.project_context import ProjectContext
-from agent.domain.vo.user_request import Prompt
 from agent.domain.vo.requirement_analysis_result import RequirementAnalysisResult
+from agent.domain.vo.user_request import Prompt
 from agent.infrastructure.prompt import PROJECT_DISCOVERY_PROMPT
 from agent.infrastructure.schema import FINISH_DISCOVERY_EXECUTION
 from agent.infrastructure.tool_registry import ToolRegistry

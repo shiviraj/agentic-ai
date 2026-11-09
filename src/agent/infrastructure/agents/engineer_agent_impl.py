@@ -1,6 +1,6 @@
-from agent.application.agent.dto.analyze_result import AnalyzeUserRequestResult
-from agent.application.port.engineer_agent import EngineerAgent
+from agent.application.agent.engineer_agent import EngineerAgent
 from agent.application.port.llm_client import LLMClient
+from agent.application.service.dto.analyze_result import AnalyzeUserRequestResult
 from agent.domain.aggregate.conversation import Conversation
 from agent.domain.llm.message import Message, Role
 from agent.infrastructure.agents.parser.analyze_user_request_parser import AnalyzeUserRequestParser

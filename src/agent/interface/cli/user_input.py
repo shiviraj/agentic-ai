@@ -29,9 +29,9 @@ def create_prompt_session() -> PromptSession[str]:
     return PromptSession(multiline=True, key_bindings=create_key_bindings(), history=FileHistory(".agent_history"))
 
 
-def user_request(session: PromptSession[str]) -> tuple[bool, UserRequest]:
+async def user_request(session: PromptSession[str]) -> tuple[bool, UserRequest]:
     try:
-        text = session.prompt("You: ")
+        text = await session.prompt_async("You: ")
     except (KeyboardInterrupt, EOFError):
         return True, UserRequest(GOODBYE)
     if text.strip() == EXIT_COMMAND:

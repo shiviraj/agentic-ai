@@ -1,6 +1,7 @@
 from abc import abstractmethod
 
-from agent.application.agent.dto.analyze_result import AnalyzeUserRequestResult
+from agent.application.service.dto.analyze_result import AnalyzeUserRequestResult
+
 from agent.domain.aggregate.conversation import Conversation
 
 
