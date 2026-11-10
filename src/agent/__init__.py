@@ -9,15 +9,17 @@ from ollama import Client as OllamaClient
 from prompt_toolkit import PromptSession
 from rich.console import Console
 
-from agent.application.service.engineer_agent_service import EngineerAgentService
-from agent.application.service.query_agent_service import QueryAgentService
 from agent.application.service.summarize_agent_service import SummarizeAgentService
 from agent.application.service.tool_executor import ToolExecutor
+from agent.application.workflow.engineer_agent_service import EngineerAgentService
+from agent.application.workflow.query_agent_service import QueryAgentService
+from agent.application.workflow.task_agent_service import TaskAgentService
 from agent.domain.aggregate.conversation import Conversation
 from agent.domain.tool.tool_registry import ToolRegistry
 from agent.infrastructure.agents.engineer_agent_impl import EngineerAgentImpl
 from agent.infrastructure.agents.query_agent_impl import QueryAgentImpl
 from agent.infrastructure.agents.summary_agent_impl import SummaryAgentImpl
+from agent.infrastructure.agents.task_agent_impl import TaskAgentImpl
 from agent.infrastructure.llm.llm_client_impl import LLMClientImpl
 from agent.infrastructure.mcp.tool_provider_impl import ToolProviderImpl
 from agent.infrastructure.persistence.conversation_repository_impl import ConversationRepositoryImpl
@@ -57,6 +59,7 @@ async def main() -> None:
     engineer_agent = EngineerAgentImpl(llm_client=llm_client)
     query_agent = QueryAgentImpl(llm_client=llm_client)
     summary_agent = SummaryAgentImpl(llm_client=llm_client)
+    task_agent = TaskAgentImpl(llm_client=llm_client)
 
     summarize_agent_service = SummarizeAgentService(
         agent=summary_agent,
@@ -69,8 +72,17 @@ async def main() -> None:
         tool_executor=tool_executor,
         tool_registry=tool_registry,
     )
+    task_agent_service = TaskAgentService(
+        agent=task_agent,
+        query_agent_service=query_agent_service,
+        summarize_agent_service=summarize_agent_service,
+        conversation_repository=conversation_repository,
+    )
     engineer_agent_service = EngineerAgentService(
-        agent=engineer_agent, query_agent_service=query_agent_service, conversation_repository=conversation_repository
+        agent=engineer_agent,
+        query_agent_service=query_agent_service,
+        conversation_repository=conversation_repository,
+        task_agent_service=task_agent_service,
     )
 
     try:

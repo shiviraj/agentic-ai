@@ -31,11 +31,10 @@ class QueryAgentService:
 
     async def run(self, conversation_id: ConversationId) -> ChatResponse:
         conversation = self._conversation_repository.find_by_conversation_id(conversation_id)
-        query_response = await self._analyze_query(conversation)
-        conversation.add_response(AgentResponse(query_response.content))
+        await self.analyze_query(conversation)
         return self._summarize_agent_service.run(conversation_id)
 
-    async def _analyze_query(self, conversation: Conversation) -> ChatResponse:
+    async def analyze_query(self, conversation: Conversation) -> ChatResponse:
         summary = "Unable to find user query response"
         tools = self._tool_registry.definitions()
         conversation.add(Message(role=Role.USER, content=self._build_content(conversation)))
@@ -66,8 +65,11 @@ class QueryAgentService:
                         ),
                     )
                 )
-        self._conversation_repository.save(conversation)
         self._logger.info("Query analysis completed")
+        conversation.add_response(AgentResponse(summary))
+        self._conversation_repository.save(conversation)
+
+        self._logger.debug(summary)
         return ChatResponse(summary)
 
     def _build_content(self, conversation: Conversation) -> str:
@@ -81,4 +83,7 @@ class QueryAgentService:
 
             Agent responses:
             {conversation.build_agent_response()}
+
+            Agent History:
+            {conversation.build_agent_history()}
             """

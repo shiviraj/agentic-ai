@@ -9,11 +9,15 @@ flowchart TD
     D -- Conversation --> I[Show response]
     I --> A
     D -- Query --> E[Query AGENT<br/> Analyze query]
-    E --> H[Get context<br/>using tools]
-    H --> J[Summarize using llm]
+    E -- Need context --> H[Get context<br/>using tools]
+    H --> E
+    E -- Done --> J[Summarize using llm]
     J --> I
     D -- Task --> V[Analyze task]
-    V --> K[Split into multiple subtasks]
+    V -- Need Investigation --> G[Get context<br/>using tools]
+    G --> V
+    V -- Need Clarification --> J
+    V -- Ready --> K[Split into multiple subtasks]
     K --> L[Plan next subtask]
     L --> M[Write tests first]
     M --> N[Run tests]

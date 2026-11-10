@@ -40,7 +40,18 @@ class Conversation(Aggregate[ConversationId]):
         return self
 
     def build_agent_response(self) -> str:
-        responses = [f"Response: {response}" for response in self.current.agent_responses]
+        return self._build_response(self.current.agent_responses)
+
+    def build_agent_history(self) -> str:
+        responses = [
+            f"""User request: {history.request}\nFinal response: {history.response}
+            Agent responses: {self._build_response(history.agent_responses)}"""
+            for history in self.history
+        ]
+        return "\n=================\n".join(responses)
+
+    def _build_response(self, responses: list[AgentResponse]) -> str:
+        responses = [f"Response: {response}" for response in responses]
         return "\n--------------\n".join(responses)
 
     @classmethod

@@ -26,6 +26,7 @@ class SummarizeAgentService:
             result = self._agent.run(conversation=conversation)
         conversation.add(Message(role=Role.ASSISTANT, content=result.content))
         conversation.add_response(AgentResponse(result.content))
+        self._conversation_repository.save(conversation)
         self._logger.info("Response summarization completed")
         return result
 
@@ -38,6 +39,9 @@ class SummarizeAgentService:
         User request:
         {conversation.get_request().value}
 
-        Agent response:
+        Agent responses:
         {conversation.build_agent_response()}
+
+        Agent History:
+        {conversation.build_agent_history()}
         """

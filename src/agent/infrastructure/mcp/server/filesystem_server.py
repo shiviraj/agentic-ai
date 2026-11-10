@@ -25,6 +25,7 @@ def create_server(root: Path) -> FastMCP:
 
         - Should not use absolute path
         - Use only relative path
+        - Ideally start with . directory then move to other directory
         """
         try:
             return files.inspect_project(path)

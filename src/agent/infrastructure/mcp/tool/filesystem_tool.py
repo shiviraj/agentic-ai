@@ -27,8 +27,17 @@ class FilesystemTools:
         self._root = root.resolve()
 
     def inspect_project(self, directory: str = ".") -> str:
-        files: list[str] = []
         path = (self._root / directory).resolve()
+        if not path.is_relative_to(self._root):
+            raise FilesystemToolError(f"Path is outside the project root: {directory}")
+
+        if not path.exists():
+            raise FilesystemToolError(f"Path does not exist: {directory}")
+
+        if not path.is_dir():
+            raise FilesystemToolError(f"Not a directory: {directory}")
+
+        files: list[str] = []
         for current, directory_names, file_names in os.walk(path):
             directory_names[:] = sorted(name for name in directory_names if name not in IGNORED_DIRECTORIES)
 
