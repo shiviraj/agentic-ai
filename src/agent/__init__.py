@@ -9,12 +9,14 @@ from ollama import Client as OllamaClient
 from prompt_toolkit import PromptSession
 from rich.console import Console
 
+from agent.application.service.analyze_task_service import AnalyzeTaskService
 from agent.application.service.summarize_agent_service import SummarizeAgentService
 from agent.application.service.tool_executor import ToolExecutor
 from agent.application.workflow.engineer_agent_service import EngineerAgentService
 from agent.application.workflow.query_agent_service import QueryAgentService
 from agent.application.workflow.task_agent_service import TaskAgentService
 from agent.domain.aggregate.conversation import Conversation
+from agent.domain.policy.task_analysis_policy import TaskAnalysisPolicy
 from agent.domain.tool.tool_registry import ToolRegistry
 from agent.infrastructure.agents.engineer_agent_impl import EngineerAgentImpl
 from agent.infrastructure.agents.query_agent_impl import QueryAgentImpl
@@ -72,8 +74,14 @@ async def main() -> None:
         tool_executor=tool_executor,
         tool_registry=tool_registry,
     )
-    task_agent_service = TaskAgentService(
+    analyze_task_service = AnalyzeTaskService(
         agent=task_agent,
+        policy=TaskAnalysisPolicy(),
+        query_agent_service=query_agent_service,
+        conversation_repository=conversation_repository,
+    )
+    task_agent_service = TaskAgentService(
+        analyze_task_service=analyze_task_service,
         query_agent_service=query_agent_service,
         summarize_agent_service=summarize_agent_service,
         conversation_repository=conversation_repository,
