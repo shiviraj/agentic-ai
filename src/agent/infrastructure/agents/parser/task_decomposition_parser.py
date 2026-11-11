@@ -1,21 +1,22 @@
 import json
 from typing import Any
 
-from agent.domain.aggregate.implementation_plan import ImplementationPlan
-from agent.domain.entity.plan_step import PlanStep
+from agent.domain.aggregate.task import Task
+from agent.domain.entity.sub_task import SubTask
 from agent.domain.errors import InvalidAgentOutputError
-from agent.domain.vo.plan_id import PlanId
 from agent.infrastructure.agents.field_check import require_str
 from agent.infrastructure.agents.parser.output_parser import OutputParser
 
 
-class PlanTaskParser(OutputParser[ImplementationPlan]):
+class TaskDecompositionParser(OutputParser[Task]):
     @property
     def schema(self) -> dict[str, Any]:
         return {
             "type": "object",
             "properties": {
-                "steps": {
+                "title": {"type": "string"},
+                "description": {"type": "string"},
+                "subtasks": {
                     "type": "array",
                     "items": {
                         "type": "object",
@@ -27,27 +28,31 @@ class PlanTaskParser(OutputParser[ImplementationPlan]):
                     },
                 },
             },
-            "required": ["steps"],
+            "required": ["title", "description", "subtasks"],
         }
 
-    def parse(self, raw: str) -> ImplementationPlan:
+    def parse(self, raw: str) -> Task:
         try:
             data = json.loads(raw)
-            steps = data.get("steps")
-            if not isinstance(steps, list):
-                raise ValueError("'steps' must be an array.")
-            sub_tasks = tuple(self._parse_step(sequence, step) for sequence, step in enumerate(steps, start=1))
+            subtasks = data.get("subtasks")
+            title = require_str(data, "title")
+            description = require_str(data, "description")
+            if not isinstance(subtasks, list):
+                raise ValueError("'subtasks' must be an array.")
+            sub_tasks = tuple(
+                self._parse_subtask(sequence, subtask) for sequence, subtask in enumerate(subtasks, start=1)
+            )
 
-            return ImplementationPlan(id=PlanId.generate(), steps=sub_tasks)
+            return Task.create(sub_tasks=sub_tasks, title=title, description=description)
 
         except (json.JSONDecodeError, KeyError, TypeError, ValueError) as error:
             raise InvalidAgentOutputError(f"Bad LLM output: {raw!r}") from error
 
-    def _parse_step(self, sequence: int, data: Any) -> PlanStep:
+    def _parse_subtask(self, sequence: int, data: Any) -> SubTask:
         if not isinstance(data, dict):
             raise ValueError("Each sub task must be an object.")
 
-        return PlanStep.create(
+        return SubTask.create(
             sequence=sequence,
             title=require_str(data, "title"),
             description=require_str(data, "description"),

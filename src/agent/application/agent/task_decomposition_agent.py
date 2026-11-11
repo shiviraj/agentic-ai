@@ -4,6 +4,6 @@ from agent.domain.aggregate.conversation import Conversation
 from agent.domain.aggregate.implementation_plan import ImplementationPlan
 
 
-class PlanAgent:
+class TaskDecompositionAgent:
     @abstractmethod
     def run(self, conversation: Conversation) -> ImplementationPlan: ...

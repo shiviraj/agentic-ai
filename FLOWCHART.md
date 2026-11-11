@@ -17,7 +17,7 @@ flowchart TD
     V -- Need Investigation --> G[Get context<br/>using tools]
     G --> V
     V -- Need Clarification --> J
-    V -- Ready --> K[Split into multiple subtasks]
+    V -- Ready --> K[Task Decomposition]
     K --> L[Plan next subtask]
     L --> M[Write tests first]
     M --> N[Run tests]
