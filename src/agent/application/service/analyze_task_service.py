@@ -46,8 +46,7 @@ class AnalyzeTaskService:
                 analysis_result.status == TaskAnalysisStatus.NEEDS_CLARIFICATION
                 or analysis_result.status == TaskAnalysisStatus.READY
             ):
-                self._conversation_repository.save(conversation)
-                return analysis_result
+                break
 
             if analysis_result.status == TaskAnalysisStatus.NEEDS_INVESTIGATION:
                 conversation.add(Message(role=Role.USER, content=str(analysis_result.open_questions)))
@@ -60,6 +59,7 @@ class AnalyzeTaskService:
                 )
 
         self._conversation_repository.save(conversation)
+        self._logger.info("Task analysis completed")
         return analysis_result
 
     async def _analyze_task(self, conversation: Conversation) -> TaskAnalysis:
@@ -70,7 +70,6 @@ class AnalyzeTaskService:
         conversation.add(Message(role=Role.ASSISTANT, content=str(result)))
         conversation.add_response(AgentResponse(str(result)))
         self._conversation_repository.save(conversation)
-        self._logger.info("Task analysis completed")
         return result
 
     def _build_content(self, conversation: Conversation) -> str:

@@ -10,6 +10,7 @@ from prompt_toolkit import PromptSession
 from rich.console import Console
 
 from agent.application.service.analyze_task_service import AnalyzeTaskService
+from agent.application.service.create_plan_service import CreatePlanService
 from agent.application.service.summarize_agent_service import SummarizeAgentService
 from agent.application.service.tool_executor import ToolExecutor
 from agent.application.workflow.engineer_agent_service import EngineerAgentService
@@ -19,6 +20,7 @@ from agent.domain.aggregate.conversation import Conversation
 from agent.domain.policy.task_analysis_policy import TaskAnalysisPolicy
 from agent.domain.tool.tool_registry import ToolRegistry
 from agent.infrastructure.agents.engineer_agent_impl import EngineerAgentImpl
+from agent.infrastructure.agents.plan_agent_impl import PlanAgentImpl
 from agent.infrastructure.agents.query_agent_impl import QueryAgentImpl
 from agent.infrastructure.agents.summary_agent_impl import SummaryAgentImpl
 from agent.infrastructure.agents.task_agent_impl import TaskAgentImpl
@@ -62,6 +64,7 @@ async def main() -> None:
     query_agent = QueryAgentImpl(llm_client=llm_client)
     summary_agent = SummaryAgentImpl(llm_client=llm_client)
     task_agent = TaskAgentImpl(llm_client=llm_client)
+    plan_agent = PlanAgentImpl(llm_client=llm_client)
 
     summarize_agent_service = SummarizeAgentService(
         agent=summary_agent,
@@ -74,6 +77,10 @@ async def main() -> None:
         tool_executor=tool_executor,
         tool_registry=tool_registry,
     )
+    create_plan_service = CreatePlanService(
+        agent=plan_agent,
+        conversation_repository=conversation_repository,
+    )
     analyze_task_service = AnalyzeTaskService(
         agent=task_agent,
         policy=TaskAnalysisPolicy(),
@@ -82,6 +89,7 @@ async def main() -> None:
     )
     task_agent_service = TaskAgentService(
         analyze_task_service=analyze_task_service,
+        create_plan_service=create_plan_service,
         query_agent_service=query_agent_service,
         summarize_agent_service=summarize_agent_service,
         conversation_repository=conversation_repository,
