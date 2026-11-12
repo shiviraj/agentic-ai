@@ -39,7 +39,7 @@ class EngineerAgentService:
             conversation.add(Message(Role.ASSISTANT, analyze_result.response))
             conversation.add_response(AgentResponse(response=analyze_result.response))
             self._conversation_repository.save(conversation)
-            return analyze_result
+            return ChatResponse(analyze_result)
 
         if analyze_result.category == RequestCategory.QUERY:
             return await self._query_agent_service.run(conversation.id)

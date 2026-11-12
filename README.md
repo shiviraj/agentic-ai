@@ -1,31 +1,32 @@
 # 1. Introduction
 
 # 2. Agenda
+- Demo of local llm
+- Demo of agentic AI
+- Steps to create Agentic AI
+- Agentic AI that I have build
+- Explain flowchart
+- Pending tasks
 
 # 3. Demo of local llm
 
 # 4. Demo of agentic ai
 
-# 5. Explain All Steps till now
+# 5. Steps to create Agentic AI
+- Create a basic chat model
+- Add memory in chat model
+- Integrate MCP client with chat model
+- Handle errors by mcp tools or chat model
 
-1. Analyze requirement 
-2. Discover context
-3. Create implementation plan
-4. Execute plan
-   1. Execute Plan Step
-      
-      Relevant tool calls 
-      
 
-# 6. Future plans
+# 6. Agentic AI that I have build
+
+# 7. Explain flowchart
+
+# 8. Pending tasks
 - Implement RAG
-- Implement MCP
 
-# 7. code walkthrough Top level
-### How python code interacts with llm
-### How tool call possible
+# 9. code walkthrough Top level
 
-# 8. What will you learn
-
-# 9. QnA
+# 10. QnA
 
