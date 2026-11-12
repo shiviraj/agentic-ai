@@ -32,6 +32,5 @@ class TaskAgentService:
 
         task = self._task_decomposition_service.run(conversation_id)
         print(task)
-        # for step in plan.steps:
-
+        
         return self._summarize_agent_service.run(conversation_id)
