@@ -1,33 +1,18 @@
 import asyncio
 import os
-import pathlib
-from contextlib import AsyncExitStack
 
 from dotenv import load_dotenv
-from fastmcp import Client as MCPClient
 from ollama import Client as OllamaClient
 from prompt_toolkit import PromptSession
 from rich.console import Console
 
-from agent.application.service.analyze_task_service import AnalyzeTaskService
-from agent.application.service.plan_subtask_service import PlanSubtaskService
-from agent.application.service.summarize_agent_service import SummarizeAgentService
-from agent.application.service.task_decomposition_service import TaskDecompositionService
-from agent.application.service.tool_executor import ToolExecutor
-from agent.application.workflow.engineer_agent_service import EngineerAgentService
-from agent.application.workflow.query_agent_service import QueryAgentService
-from agent.application.workflow.task_agent_service import TaskAgentService
+from agent.application.service.conversation_context_service import ConversationContextService
+from agent.application.service.conversation_service import ConversationService
+from agent.application.workflow.engineer.engineer_workflow import EngineerWorkflow
+from agent.application.workflow.workflow_input import WorkflowInput
 from agent.domain.aggregate.conversation import Conversation
-from agent.domain.policy.task_analysis_policy import TaskAnalysisPolicy
-from agent.domain.tool.tool_registry import ToolRegistry
 from agent.infrastructure.agents.engineer_agent_impl import EngineerAgentImpl
-from agent.infrastructure.agents.query_agent_impl import QueryAgentImpl
-from agent.infrastructure.agents.subtask_planning_agent_impl import SubtaskPlanningAgentImpl
-from agent.infrastructure.agents.summary_agent_impl import SummaryAgentImpl
-from agent.infrastructure.agents.task_agent_impl import TaskAgentImpl
-from agent.infrastructure.agents.task_decomposition_agent_impl import TaskDecompositionAgentImpl
 from agent.infrastructure.llm.llm_client_impl import LLMClientImpl
-from agent.infrastructure.mcp.tool_provider_impl import ToolProviderImpl
 from agent.infrastructure.persistence.conversation_repository_impl import ConversationRepositoryImpl
 from agent.infrastructure.prompts.prompt_loader import load_prompt
 from agent.interface.cli.user_input import create_prompt_session, user_request
@@ -52,61 +37,70 @@ async def main() -> None:
     console = Console()
     console.print(f"[cyan]{load_prompt('instruction')}[/cyan]")
 
-    mcp_client = MCPClient(pathlib.Path("src/agent/infrastructure/mcp/server/filesystem_server.py"))
-    exit_stack = AsyncExitStack()
-    await exit_stack.enter_async_context(mcp_client)
+    # mcp_client = MCPClient(pathlib.Path("src/agent/infrastructure/mcp/server/filesystem_server.py"))
+    # exit_stack = AsyncExitStack()
+    # await exit_stack.enter_async_context(mcp_client)
 
-    tool_registry = ToolRegistry()
-    provider = ToolProviderImpl(client=mcp_client)
+    # tool_registry = ToolRegistry()
+    # provider = ToolProviderImpl(client=mcp_client)
 
-    await tool_registry.register_provider(provider=provider)
-    tool_executor = ToolExecutor(registry=tool_registry)
+    # await tool_registry.register_provider(provider=provider)
+    # tool_executor = ToolExecutor(registry=tool_registry)
 
-    engineer_agent = EngineerAgentImpl(llm_client=llm_client)
-    query_agent = QueryAgentImpl(llm_client=llm_client)
-    summary_agent = SummaryAgentImpl(llm_client=llm_client)
-    task_agent = TaskAgentImpl(llm_client=llm_client)
-    task_decomposition_agent = TaskDecompositionAgentImpl(llm_client=llm_client)
-    subtask_planning_agent = SubtaskPlanningAgentImpl(llm_client=llm_client)
+    # engineer_agent = EngineerAgentImpl(llm_client=llm_client)
+    # query_agent = QueryAgentImpl(llm_client=llm_client)
+    # summary_agent = SummaryAgentImpl(llm_client=llm_client)
+    # task_agent = TaskAgentImpl(llm_client=llm_client)
+    # task_decomposition_agent = TaskDecompositionAgentImpl(llm_client=llm_client)
+    # subtask_planning_agent = SubtaskPlanningAgentImpl(llm_client=llm_client)
 
-    summarize_agent_service = SummarizeAgentService(
-        agent=summary_agent,
-        conversation_repository=conversation_repository,
-    )
-    query_agent_service = QueryAgentService(
-        agent=query_agent,
-        summarize_agent_service=summarize_agent_service,
-        conversation_repository=conversation_repository,
-        tool_executor=tool_executor,
-        tool_registry=tool_registry,
-    )
-    task_decomposition_service = TaskDecompositionService(
-        agent=task_decomposition_agent,
-        conversation_repository=conversation_repository,
-    )
-    analyze_task_service = AnalyzeTaskService(
-        agent=task_agent,
-        policy=TaskAnalysisPolicy(),
-        query_agent_service=query_agent_service,
-        conversation_repository=conversation_repository,
-    )
-    plan_subtask_service = PlanSubtaskService(
-        agent=subtask_planning_agent,
-        conversation_repository=conversation_repository,
-    )
-    task_agent_service = TaskAgentService(
-        analyze_task_service=analyze_task_service,
-        task_decomposition_service=task_decomposition_service,
-        query_agent_service=query_agent_service,
-        plan_subtask_service=plan_subtask_service,
-        summarize_agent_service=summarize_agent_service,
-        conversation_repository=conversation_repository,
-    )
-    engineer_agent_service = EngineerAgentService(
-        agent=engineer_agent,
-        query_agent_service=query_agent_service,
-        conversation_repository=conversation_repository,
-        task_agent_service=task_agent_service,
+    # summarize_agent_service = SummarizeAgentService(
+    #     agent=summary_agent,
+    #     conversation_repository=conversation_repository,
+    # )
+    # query_agent_service = QueryAgentService(
+    #     agent=query_agent,
+    #     summarize_agent_service=summarize_agent_service,
+    #     conversation_repository=conversation_repository,
+    #     tool_executor=tool_executor,
+    #     tool_registry=tool_registry,
+    # )
+    # task_decomposition_service = TaskDecompositionService(
+    #     agent=task_decomposition_agent,
+    #     conversation_repository=conversation_repository,
+    # )
+    # analyze_task_service = AnalyzeTaskService(
+    #     agent=task_agent,
+    #     policy=TaskAnalysisPolicy(),
+    #     query_agent_service=query_agent_service,
+    #     conversation_repository=conversation_repository,
+    # )
+    # plan_subtask_service = PlanSubtaskService(
+    #     agent=subtask_planning_agent,
+    #     conversation_repository=conversation_repository,
+    # )
+    # task_agent_service = TaskAgentService(
+    #     analyze_task_service=analyze_task_service,
+    #     task_decomposition_service=task_decomposition_service,
+    #     query_agent_service=query_agent_service,
+    #     plan_subtask_service=plan_subtask_service,
+    #     summarize_agent_service=summarize_agent_service,
+    #     conversation_repository=conversation_repository,
+    # )
+    # engineer_agent_service = EngineerAgentService(
+    #     agent=engineer_agent,
+    #     query_agent_service=query_agent_service,
+    #     conversation_repository=conversation_repository,
+    #     task_agent_service=task_agent_service,
+    # )
+
+    conversation_service = ConversationService(repository=conversation_repository)
+    conversation_context_service = ConversationContextService(conversation_repository=conversation_repository)
+
+    engineer_workflow = EngineerWorkflow(
+        engineer_agent=EngineerAgentImpl(llm_client=llm_client),
+        conversation_service=conversation_service,
+        conversation_context_service=conversation_context_service,
     )
 
     try:
@@ -120,10 +114,12 @@ async def main() -> None:
                 logger.info(request.value, "dim")
                 break
             try:
-                conversation.start_interaction(request)
-                response = await engineer_agent_service.run(conversation.id)
-                conversation.stop_interaction(response)
-                console.print(f"\nAgent:\t{response.content}\n")
+                # conversation.start_interaction(request)
+                response = engineer_workflow.execute(
+                    WorkflowInput(conversation_id=conversation.id, user_request=request)
+                )
+                # conversation.stop_interaction(response)
+                console.print(f"\nAgent:\t{response}\n")
             except KeyboardInterrupt:
                 logger.warn("Request interrupted.")
             except Exception as exc:

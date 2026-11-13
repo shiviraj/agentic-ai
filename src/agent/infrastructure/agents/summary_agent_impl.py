@@ -1,8 +1,8 @@
-from agent.application.agent.summary_agent import SummaryAgent
+from agent.domain.agent.summary_agent import SummaryAgent
 from agent.application.port.dto.llm_response import ChatResponse
 from agent.application.port.llm_client import LLMClient
 from agent.domain.aggregate.conversation import Conversation
-from agent.domain.llm.message import Message, Role
+from agent.domain.entity.message import Message, Role
 from agent.infrastructure.prompts.prompt_loader import load_prompt
 
 

@@ -1,7 +1,7 @@
 import json
 from typing import Any
 
-from agent.domain.errors import InvalidAgentOutputError
+from agent.domain.errors import InvalidAgentResponseError
 from agent.domain.vo.task_analysis import (
     OpenQuestion,
     OpenQuestionCategory,
@@ -61,7 +61,7 @@ class AnalyzeTaskParser(OutputParser[TaskAnalysis]):
             )
 
         except (json.JSONDecodeError, KeyError, TypeError, ValueError) as error:
-            raise InvalidAgentOutputError(f"Bad LLM output: {raw!r}") from error
+            raise InvalidAgentResponseError(f"Bad LLM output: {raw!r}") from error
 
     def _parse_open_question(self, data: Any) -> OpenQuestion:
         if not isinstance(data, dict):

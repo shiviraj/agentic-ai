@@ -9,7 +9,7 @@ from agent.application.port.llm_client import LLMClient
 from agent.domain.agent.agent_result import ResultStatus
 from agent.domain.agent.agent_role import AgentRole
 from agent.domain.errors import LlmUnavailableError
-from agent.domain.llm.message import Role
+from agent.domain.entity.message import Role
 from tests.fakes.fake_llm_client import FakeLLMClient
 
 

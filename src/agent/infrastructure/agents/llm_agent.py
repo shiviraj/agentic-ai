@@ -4,8 +4,8 @@ from pydantic import ValidationError
 
 from agent.application.port.llm_client import LLMClient
 from agent.domain.agent.agent import Agent
-from agent.domain.errors import InvalidAgentOutputError
-from agent.domain.llm.message import Message, Role
+from agent.domain.entity.message import Message, Role
+from agent.domain.errors import InvalidAgentResponseError
 from agent.infrastructure.agents.parser.output_parser import OutputParser
 
 T = TypeVar("T")
@@ -30,13 +30,13 @@ class LLMAgent(Agent):
             Message(Role.SYSTEM, self._system_prompt),
             Message(Role.USER, user_content),
         ]
-        last_error: InvalidAgentOutputError | None = None
+        last_error: InvalidAgentResponseError | None = None
 
         for _ in range(self._max_attempts):
             reply = self._llm.chat(messages, parser.schema)
             try:
                 return parser.parse(reply)
-            except InvalidAgentOutputError as e:
+            except InvalidAgentResponseError as e:
                 last_error = e
                 # Show the model its own bad answer and what was wrong with it
                 messages.append(Message(Role.ASSISTANT, reply))
@@ -47,7 +47,7 @@ class LLMAgent(Agent):
                     )
                 )
 
-        raise InvalidAgentOutputError(f"no valid answer after {self._max_attempts} attempts: {last_error}")
+        raise InvalidAgentResponseError(f"no valid answer after {self._max_attempts} attempts: {last_error}")
 
 
 def format_errors(e: ValidationError) -> str:

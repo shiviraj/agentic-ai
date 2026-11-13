@@ -1,8 +1,8 @@
-from agent.application.agent.query_agent import QueryAgent
+from agent.domain.agent.query_agent import QueryAgent
 from agent.application.port.llm_client import LLMClient
 from agent.application.service.dto.analyze_query_result import AnalyzeQueryResult
 from agent.domain.aggregate.conversation import Conversation
-from agent.domain.llm.message import Message, Role
+from agent.domain.entity.message import Message, Role
 from agent.domain.tool.tool import ToolDefinition
 from agent.infrastructure.llm.finish_tool import FINISH_TOOL
 from agent.infrastructure.llm.utils import to_ollama_tools

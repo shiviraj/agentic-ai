@@ -3,7 +3,7 @@ from typing import Any
 
 from agent.domain.aggregate.task import Task
 from agent.domain.entity.subtask import Subtask
-from agent.domain.errors import InvalidAgentOutputError
+from agent.domain.errors import InvalidAgentResponseError
 from agent.infrastructure.agents.field_check import require_str
 from agent.infrastructure.agents.parser.output_parser import OutputParser
 
@@ -46,7 +46,7 @@ class TaskDecompositionParser(OutputParser[Task]):
             return Task.create(sub_tasks=sub_tasks, title=title, description=description)
 
         except (json.JSONDecodeError, KeyError, TypeError, ValueError) as error:
-            raise InvalidAgentOutputError(f"Bad LLM output: {raw!r}") from error
+            raise InvalidAgentResponseError(f"Bad LLM output: {raw!r}") from error
 
     def _parse_subtask(self, sequence: int, data: Any) -> Subtask:
         if not isinstance(data, dict):

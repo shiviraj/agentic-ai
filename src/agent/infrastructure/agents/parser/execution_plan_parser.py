@@ -2,7 +2,7 @@ import json
 from typing import Any
 
 from agent.domain.aggregate.execution_plan import ExecutionAgent, ExecutionPlan, ExecutionStep
-from agent.domain.errors import InvalidAgentOutputError
+from agent.domain.errors import InvalidAgentResponseError
 from agent.infrastructure.agents.field_check import require_str
 from agent.infrastructure.agents.parser.output_parser import OutputParser
 
@@ -40,7 +40,7 @@ class ExecutionPlanParser(OutputParser[ExecutionPlan]):
             return ExecutionPlan.create(steps=steps)
 
         except (json.JSONDecodeError, KeyError, TypeError, ValueError) as error:
-            raise InvalidAgentOutputError(f"Bad LLM output: {raw!r}") from error
+            raise InvalidAgentResponseError(f"Bad LLM output: {raw!r}") from error
 
     def _parse_execution_step(self, data: Any, index: int) -> ExecutionStep:
         if not isinstance(data, dict):

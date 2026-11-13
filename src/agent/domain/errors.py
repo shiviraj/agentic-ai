@@ -6,15 +6,15 @@ class InvalidStatusTransitionError(DomainError):
     """A task tried to move to a status it is not allowed to reach."""
 
 
-class TaskNotFoundError(DomainError):
-    """No task exists with the given id."""
+class DataNotFoundError(DomainError):
+    """Data not found."""
 
 
 class LlmUnavailableError(DomainError):
     """The LLM could not be reached or returned an unusable answer."""
 
 
-class InvalidAgentOutputError(DomainError):
+class InvalidAgentResponseError(DomainError):
     """An agent's LLM answer could not be understood or failed validation."""
 
 

@@ -3,7 +3,7 @@ from collections.abc import Sequence
 from typing import Any
 
 from agent.application.port.dto.llm_response import ChatResponse, ToolResponse
-from agent.domain.llm.message import Message
+from agent.domain.entity.message import Message
 
 
 class LLMClient(ABC):

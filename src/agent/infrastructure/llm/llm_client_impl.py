@@ -7,7 +7,7 @@ import ollama
 from agent.application.port.dto.llm_response import ChatResponse, ToolResponse
 from agent.application.port.llm_client import LLMClient
 from agent.domain.errors import LlmUnavailableError
-from agent.domain.llm.message import Message
+from agent.domain.entity.message import Message
 from agent.domain.tool.tool import ToolCall
 from agent.infrastructure.llm.utils import to_ollama_payload
 

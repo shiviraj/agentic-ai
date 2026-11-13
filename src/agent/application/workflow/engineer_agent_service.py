@@ -1,10 +1,10 @@
-from agent.application.agent.engineer_agent import EngineerAgent
 from agent.application.port.dto.llm_response import ChatResponse
 from agent.application.service.dto.analyze_user_request_result import AnalyzeUserRequestResult, RequestCategory
 from agent.application.workflow.query_agent_service import QueryAgentService
 from agent.application.workflow.task_agent_service import TaskAgentService
+from agent.domain.agent.engineer_agent import EngineerAgent
 from agent.domain.aggregate.conversation import Conversation
-from agent.domain.llm.message import Message, Role
+from agent.domain.entity.message import Message
 from agent.domain.repository.conversation_repository import ConversationRepository
 from agent.domain.vo.agent_response import AgentResponse
 from agent.domain.vo.conversation_id import ConversationId
@@ -35,7 +35,7 @@ class EngineerAgentService:
             return await self._task_agent_service.run(conversation_id)
 
     def _analyze_user_request(self, conversation_id: ConversationId) -> AnalyzeUserRequestResult:
-        conversation = self._conversation_repository.find_by_conversation_id(conversation_id)
+        conversation = self._conversation_repository.find_by_id(conversation_id)
         conversation.add(Message(role=Role.USER, content=self._build_content(conversation)))
         self._conversation_repository.save(conversation)
 

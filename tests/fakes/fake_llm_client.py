@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 
 from agent.application.port.llm_client import LLMClient
-from agent.domain.llm.message import Message
+from agent.domain.entity.message import Message
 
 
 class FakeLLMClient(LLMClient):

@@ -13,5 +13,5 @@ class ConversationRepositoryImpl(ConversationRepository):
         self._conversations[conversation.id.value] = conversation
         return conversation
 
-    def find_by_conversation_id(self, conversation_id: ConversationId) -> Conversation | None:
+    def find_by_id(self, conversation_id: ConversationId) -> Conversation | None:
         return self._conversations[conversation_id.value]

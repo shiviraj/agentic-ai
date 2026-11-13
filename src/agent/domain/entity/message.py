@@ -1,0 +1,57 @@
+from dataclasses import dataclass
+from datetime import datetime
+
+from agent.domain.vo.message_id import MessageId
+from agent.domain.vo.message_type import MessageType
+from agent.domain.vo.role import Role
+from agent.domain.vo.tool_call import ToolCall
+from agent.domain.vo.tool_call_id import ToolCallId
+from agent.shared.domain.aggregate import Aggregate
+
+
+@dataclass
+class Message(Aggregate[MessageId]):
+    role: Role
+    message_type: MessageType
+    content: str | None
+    created_at: datetime
+
+    agent_name: str | None = None
+    tool_calls: tuple[ToolCall, ...] = ()
+    tool_call_id: ToolCallId | None = None
+    tool_name: str | None = None
+
+    @classmethod
+    def create_text(cls, role: Role, content: str | None) -> "Message":
+        return Message.create(role=role, content=content, message_type=MessageType.TEXT)
+
+    @classmethod
+    def create_tool(cls, role: Role, content: str | None) -> "Message":
+        return Message.create(role=role, content=content, message_type=MessageType.TEXT)
+
+    @classmethod
+    def create_tool_result(cls, role: Role, content: str | None) -> "Message":
+        return Message.create(role=role, content=content, message_type=MessageType.TEXT)
+
+    @classmethod
+    def create(
+        cls,
+        role: Role,
+        message_type: MessageType,
+        content: str | None,
+        agent_name: str | None = None,
+        tool_calls: tuple[ToolCall, ...] = (),
+        tool_call_id: ToolCallId | None = None,
+        tool_name: str | None = None,
+    ) -> "Message":
+        return cls(
+            id=MessageId.generate(),
+            role=role,
+            message_type=message_type,
+            content=content,
+            created_at=datetime.now(),
+            agent_name=agent_name,
+            tool_calls=tool_calls,
+            tool_call_id=tool_call_id,
+            tool_name=tool_name,
+        )

@@ -5,7 +5,7 @@ import ollama
 import pytest
 
 from agent.domain.errors import LlmUnavailableError
-from agent.domain.llm.message import Message, Role
+from agent.domain.entity.message import Message, Role
 from agent.infrastructure.llm.llm_client_impl import LLMClientImpl
 
 

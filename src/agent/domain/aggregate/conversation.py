@@ -1,59 +1,21 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
 
-from agent.application.port.dto.llm_response import ChatResponse
-from agent.domain.entity.interaction import Interaction
-from agent.domain.llm.message import Message
-from agent.domain.vo.agent_response import AgentResponse
+from agent.domain.entity.message import Message
 from agent.domain.vo.conversation_id import ConversationId
-from agent.domain.vo.user_request import UserRequest
 from agent.shared.domain.aggregate import Aggregate
 
 
 @dataclass(eq=False)
 class Conversation(Aggregate[ConversationId]):
-    messages: list[Message]
-    history: list[Interaction]
-    current: Interaction | None
+    messages: list[Message] = field(default_factory=list)
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
-    def add(self, message: Message) -> "Conversation":
+    def add_message(self, message: Message) -> None:
         self.messages.append(message)
-        return self
-
-    def get_messages(self) -> list[Message]:
-        return self.messages
-
-    def start_interaction(self, request: UserRequest) -> "Conversation":
-        self.current = Interaction.create(request)
-        return self
-
-    def stop_interaction(self, response: ChatResponse) -> "Conversation":
-        self.current.response = response
-        self.history.append(self.current)
-        self.current = None
-        return self
-
-    def get_request(self) -> UserRequest:
-        return self.current.request
-
-    def add_response(self, response: AgentResponse) -> "Conversation":
-        self.current.agent_responses.append(response)
-        return self
-
-    def build_agent_response(self) -> str:
-        return self._build_response(self.current.agent_responses)
-
-    def build_agent_history(self) -> str:
-        responses = [
-            f"""User request: {history.request}\nFinal response: {history.response}
-            Agent responses: {self._build_response(history.agent_responses)}"""
-            for history in self.history
-        ]
-        return "\n=================\n".join(responses)
-
-    def _build_response(self, responses: list[AgentResponse]) -> str:
-        responses = [f"Response: {response}" for response in responses]
-        return "\n--------------\n".join(responses)
+        self.updated_at = datetime.now(timezone.utc)
 
     @classmethod
     def create(cls) -> "Conversation":
-        return cls(id=ConversationId.generate(), messages=[], history=[], current=None)
+        return cls(id=ConversationId.generate())

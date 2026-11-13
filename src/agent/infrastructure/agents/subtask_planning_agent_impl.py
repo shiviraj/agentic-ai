@@ -1,8 +1,8 @@
-from agent.application.agent.subtask_planning_agent import SubtaskPlanningAgent
+from agent.domain.agent.subtask_planning_agent import SubtaskPlanningAgent
 from agent.application.port.llm_client import LLMClient
 from agent.domain.aggregate.conversation import Conversation
 from agent.domain.aggregate.execution_plan import ExecutionPlan
-from agent.domain.llm.message import Message, Role
+from agent.domain.entity.message import Message, Role
 from agent.infrastructure.agents.parser.execution_plan_parser import ExecutionPlanParser
 from agent.infrastructure.prompts.prompt_loader import load_prompt
 

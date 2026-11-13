@@ -1,7 +1,7 @@
 import pytest
 from agent.infrastructure.agents.json_utils import parse_json_object
 
-from agent.domain.errors import InvalidAgentOutputError
+from agent.domain.errors import InvalidAgentResponseError
 
 
 def test_plain_json():
@@ -18,5 +18,5 @@ def test_json_with_chatter_around_it():
 
 @pytest.mark.parametrize("bad", ["not json", "", "[1, 2, 3]", '"text"', "{broken"])
 def test_bad_input_raises(bad):
-    with pytest.raises(InvalidAgentOutputError):
+    with pytest.raises(InvalidAgentResponseError):
         parse_json_object(bad)

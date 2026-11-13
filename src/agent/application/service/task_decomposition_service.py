@@ -1,7 +1,7 @@
-from agent.application.agent.task_decomposition_agent import TaskDecompositionAgent
+from agent.domain.agent.task_decomposition_agent import TaskDecompositionAgent
 from agent.domain.aggregate.conversation import Conversation
 from agent.domain.aggregate.task import Task
-from agent.domain.llm.message import Message, Role
+from agent.domain.entity.message import Message, Role
 from agent.domain.repository.conversation_repository import ConversationRepository
 from agent.domain.vo.agent_response import AgentResponse
 from agent.domain.vo.conversation_id import ConversationId
@@ -19,7 +19,7 @@ class TaskDecompositionService:
         self._logger = Logger("TaskDecompositionService")
 
     def run(self, conversation_id: ConversationId) -> Task:
-        conversation = self._conversation_repository.find_by_conversation_id(conversation_id)
+        conversation = self._conversation_repository.find_by_id(conversation_id)
         conversation.add(Message(role=Role.USER, content=self._build_content(conversation)))
         with self._logger.status(message="Decomposition task"):
             result = self._agent.run(conversation)

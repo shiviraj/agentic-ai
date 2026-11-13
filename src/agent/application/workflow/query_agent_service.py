@@ -1,9 +1,9 @@
-from agent.application.agent.query_agent import QueryAgent
+from agent.domain.agent.query_agent import QueryAgent
 from agent.application.port.dto.llm_response import ChatResponse
 from agent.application.service.summarize_agent_service import SummarizeAgentService
 from agent.application.service.tool_executor import ToolExecutor
 from agent.domain.aggregate.conversation import Conversation
-from agent.domain.llm.message import Message, Role
+from agent.domain.entity.message import Message, Role
 from agent.domain.repository.conversation_repository import ConversationRepository
 from agent.domain.tool.tool_registry import ToolRegistry
 from agent.domain.vo.agent_response import AgentResponse
@@ -34,7 +34,7 @@ class QueryAgentService:
         return self._summarize_agent_service.run(conversation_id)
 
     async def analyze_query(self, conversation_id: ConversationId) -> ChatResponse:
-        conversation = self._conversation_repository.find_by_conversation_id(conversation_id)
+        conversation = self._conversation_repository.find_by_id(conversation_id)
         summary = "Unable to find user query response"
         tools = self._tool_registry.definitions()
         conversation.add(Message(role=Role.USER, content=self._build_content(conversation)))

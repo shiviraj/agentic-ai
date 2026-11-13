@@ -1,8 +1,8 @@
-from agent.application.agent.subtask_planning_agent import SubtaskPlanningAgent
+from agent.domain.agent.subtask_planning_agent import SubtaskPlanningAgent
 from agent.domain.aggregate.conversation import Conversation
 from agent.domain.aggregate.task import Task
+from agent.domain.entity.message import Message, Role
 from agent.domain.entity.subtask import Subtask
-from agent.domain.llm.message import Message, Role
 from agent.domain.repository.conversation_repository import ConversationRepository
 from agent.domain.vo.agent_response import AgentResponse
 from agent.domain.vo.conversation_id import ConversationId
@@ -20,7 +20,7 @@ class PlanSubtaskService:
         self._logger = Logger("PlanSubtaskService")
 
     def run(self, conversation_id: ConversationId, subtask: Subtask) -> Task:
-        conversation = self._conversation_repository.find_by_conversation_id(conversation_id)
+        conversation = self._conversation_repository.find_by_id(conversation_id)
         conversation.add(Message(role=Role.USER, content=self._build_content(conversation, subtask)))
         with self._logger.status(message="Planning subtask"):
             result = self._agent.run(conversation)

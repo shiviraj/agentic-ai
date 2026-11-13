@@ -1,6 +1,6 @@
 from typing import Any
 
-from agent.domain.llm.message import Message
+from agent.domain.entity.message import Message
 from agent.domain.tool.tool import ToolDefinition
 
 

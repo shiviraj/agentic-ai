@@ -1,7 +1,7 @@
-from agent.application.agent.task_agent import TaskAgent
+from agent.domain.agent.task_agent import TaskAgent
 from agent.application.workflow.query_agent_service import QueryAgentService
 from agent.domain.aggregate.conversation import Conversation
-from agent.domain.llm.message import Message, Role
+from agent.domain.entity.message import Message, Role
 from agent.domain.policy.task_analysis_policy import TaskAnalysisPolicy
 from agent.domain.repository.conversation_repository import ConversationRepository
 from agent.domain.vo.agent_response import AgentResponse
@@ -28,7 +28,7 @@ class AnalyzeTaskService:
         self._logger = Logger("TaskAgentService")
 
     async def run(self, conversation_id: ConversationId) -> TaskAnalysis:
-        conversation = self._conversation_repository.find_by_conversation_id(conversation_id)
+        conversation = self._conversation_repository.find_by_id(conversation_id)
         analysis_result = None
         for _ in range(MAX_ITERATIONS):
             analysis_result = await self._analyze_task(conversation)

@@ -1,8 +1,8 @@
 from ollama import ChatResponse
 
-from agent.application.agent.summary_agent import SummaryAgent
+from agent.domain.agent.summary_agent import SummaryAgent
 from agent.domain.aggregate.conversation import Conversation
-from agent.domain.llm.message import Message, Role
+from agent.domain.entity.message import Message, Role
 from agent.domain.repository.conversation_repository import ConversationRepository
 from agent.domain.vo.agent_response import AgentResponse
 from agent.domain.vo.conversation_id import ConversationId
@@ -20,7 +20,7 @@ class SummarizeAgentService:
         self._logger = Logger("SummarizeAgentService")
 
     def run(self, conversation_id: ConversationId) -> ChatResponse:
-        conversation = self._conversation_repository.find_by_conversation_id(conversation_id)
+        conversation = self._conversation_repository.find_by_id(conversation_id)
         conversation.add(Message(role=Role.USER, content=self._build_content(conversation)))
         with self._logger.status(message="Summarizing response..."):
             result = self._agent.run(conversation=conversation)

@@ -4,7 +4,7 @@ from agent.application.service.plan_subtask_service import PlanSubtaskService
 from agent.application.service.summarize_agent_service import SummarizeAgentService
 from agent.application.service.task_decomposition_service import TaskDecompositionService
 from agent.application.workflow.query_agent_service import QueryAgentService
-from agent.domain.llm.message import Message, Role
+from agent.domain.entity.message import Message, Role
 from agent.domain.repository.conversation_repository import ConversationRepository
 from agent.domain.vo.conversation_id import ConversationId
 from agent.domain.vo.task_analysis import TaskAnalysisStatus
