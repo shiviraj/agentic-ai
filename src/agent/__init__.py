@@ -10,6 +10,7 @@ from prompt_toolkit import PromptSession
 from rich.console import Console
 
 from agent.application.service.analyze_task_service import AnalyzeTaskService
+from agent.application.service.plan_subtask_service import PlanSubtaskService
 from agent.application.service.summarize_agent_service import SummarizeAgentService
 from agent.application.service.task_decomposition_service import TaskDecompositionService
 from agent.application.service.tool_executor import ToolExecutor
@@ -21,6 +22,7 @@ from agent.domain.policy.task_analysis_policy import TaskAnalysisPolicy
 from agent.domain.tool.tool_registry import ToolRegistry
 from agent.infrastructure.agents.engineer_agent_impl import EngineerAgentImpl
 from agent.infrastructure.agents.query_agent_impl import QueryAgentImpl
+from agent.infrastructure.agents.subtask_planning_agent_impl import SubtaskPlanningAgentImpl
 from agent.infrastructure.agents.summary_agent_impl import SummaryAgentImpl
 from agent.infrastructure.agents.task_agent_impl import TaskAgentImpl
 from agent.infrastructure.agents.task_decomposition_agent_impl import TaskDecompositionAgentImpl
@@ -65,6 +67,7 @@ async def main() -> None:
     summary_agent = SummaryAgentImpl(llm_client=llm_client)
     task_agent = TaskAgentImpl(llm_client=llm_client)
     task_decomposition_agent = TaskDecompositionAgentImpl(llm_client=llm_client)
+    subtask_planning_agent = SubtaskPlanningAgentImpl(llm_client=llm_client)
 
     summarize_agent_service = SummarizeAgentService(
         agent=summary_agent,
@@ -87,10 +90,15 @@ async def main() -> None:
         query_agent_service=query_agent_service,
         conversation_repository=conversation_repository,
     )
+    plan_subtask_service = PlanSubtaskService(
+        agent=subtask_planning_agent,
+        conversation_repository=conversation_repository,
+    )
     task_agent_service = TaskAgentService(
         analyze_task_service=analyze_task_service,
         task_decomposition_service=task_decomposition_service,
         query_agent_service=query_agent_service,
+        plan_subtask_service=plan_subtask_service,
         summarize_agent_service=summarize_agent_service,
         conversation_repository=conversation_repository,
     )

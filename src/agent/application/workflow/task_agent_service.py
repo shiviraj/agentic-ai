@@ -1,8 +1,10 @@
 from agent.application.port.dto.llm_response import ChatResponse
 from agent.application.service.analyze_task_service import AnalyzeTaskService
+from agent.application.service.plan_subtask_service import PlanSubtaskService
 from agent.application.service.summarize_agent_service import SummarizeAgentService
 from agent.application.service.task_decomposition_service import TaskDecompositionService
 from agent.application.workflow.query_agent_service import QueryAgentService
+from agent.domain.llm.message import Message, Role
 from agent.domain.repository.conversation_repository import ConversationRepository
 from agent.domain.vo.conversation_id import ConversationId
 from agent.domain.vo.task_analysis import TaskAnalysisStatus
@@ -14,6 +16,7 @@ class TaskAgentService:
         self,
         analyze_task_service: AnalyzeTaskService,
         task_decomposition_service: TaskDecompositionService,
+        plan_subtask_service: PlanSubtaskService,
         summarize_agent_service: SummarizeAgentService,
         query_agent_service: QueryAgentService,
         conversation_repository: ConversationRepository,
@@ -21,6 +24,7 @@ class TaskAgentService:
         self._analyze_task_service = analyze_task_service
         self._summarize_agent_service = summarize_agent_service
         self._task_decomposition_service = task_decomposition_service
+        self._plan_subtask_service = plan_subtask_service
         self._query_agent_service = query_agent_service
         self._conversation_repository = conversation_repository
         self._logger = Logger("TaskAgentService")
@@ -31,6 +35,8 @@ class TaskAgentService:
             return self._summarize_agent_service.run(conversation_id)
 
         task = self._task_decomposition_service.run(conversation_id)
-        print(task)
+        for subtask in task.sub_tasks:
+            execution_plan = self._plan_subtask_service.run(conversation_id, subtask)
+            print(execution_plan)
 
         return self._summarize_agent_service.run(conversation_id)

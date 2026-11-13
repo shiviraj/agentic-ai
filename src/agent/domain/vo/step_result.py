@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from agent.domain.entity.sub_task import PlanStep
+from agent.domain.entity.subtask import PlanStep
 
 
 @dataclass

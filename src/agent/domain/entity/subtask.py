@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from enum import Enum
 
-from agent.domain.vo.sub_task_id import SubTaskId
+from agent.domain.vo.subtask_id import SubtaskId
 from agent.shared.domain.entity import Entity
 
 
@@ -14,7 +14,7 @@ class SubTaskStatus(str, Enum):
 
 
 @dataclass(frozen=False)
-class SubTask(Entity[SubTaskId]):
+class Subtask(Entity[SubtaskId]):
     sequence: int
     title: str
     description: str
@@ -26,9 +26,9 @@ class SubTask(Entity[SubTaskId]):
         sequence: int,
         title: str,
         description: str,
-    ) -> "SubTask":
+    ) -> "Subtask":
         return cls(
-            id=SubTaskId.generate(),
+            id=SubtaskId.generate(),
             sequence=sequence,
             title=title,
             description=description,

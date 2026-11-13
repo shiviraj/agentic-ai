@@ -13,7 +13,7 @@ class TaskDecompositionAgentImpl(TaskDecompositionAgent):
         self._parser = TaskDecompositionParser()
         self._system_prompt = load_prompt("task_decomposition")
 
-    def run(self, conversation: Conversation) -> Task:
+    def run(self, conversation: Conversation) -> e:
         messages = [Message(Role.SYSTEM, self._system_prompt), *conversation.get_messages()]
         response = self._llm_client.chat(messages=messages, schema=self._parser.schema)
         return self._parser.parse(response.content)
