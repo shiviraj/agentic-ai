@@ -38,7 +38,7 @@ class AnalyzeTaskService:
                 conversation.add(
                     Message(
                         role=Role.USER,
-                        content=f"Your previous response is invalid: {e}",
+                        content=f"Your previous response was invalid: {e}",
                     )
                 )
                 continue
@@ -50,7 +50,8 @@ class AnalyzeTaskService:
 
             if analysis_result.status == TaskAnalysisStatus.NEEDS_INVESTIGATION:
                 conversation.add(Message(role=Role.USER, content=str(analysis_result.open_questions)))
-                answer = await self._query_agent_service.analyze_query(conversation)
+                self._conversation_repository.save(conversation)
+                answer = await self._query_agent_service.analyze_query(conversation_id)
                 conversation.add(
                     Message(
                         role=Role.ASSISTANT,

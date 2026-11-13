@@ -1,6 +1,6 @@
 from agent.application.agent.engineer_agent import EngineerAgent
 from agent.application.port.dto.llm_response import ChatResponse
-from agent.application.service.dto.analyze_user_request_result import RequestCategory
+from agent.application.service.dto.analyze_user_request_result import AnalyzeUserRequestResult, RequestCategory
 from agent.application.workflow.query_agent_service import QueryAgentService
 from agent.application.workflow.task_agent_service import TaskAgentService
 from agent.domain.aggregate.conversation import Conversation
@@ -26,6 +26,15 @@ class EngineerAgentService:
         self._logger = Logger("EngineerAgentService")
 
     async def run(self, conversation_id: ConversationId) -> ChatResponse:
+        analyze_result = self._analyze_user_request(conversation_id)
+        if analyze_result.category == RequestCategory.CONVERSATION:
+            return ChatResponse(analyze_result.response)
+        if analyze_result.category == RequestCategory.QUERY:
+            return await self._query_agent_service.run(conversation_id)
+        if analyze_result.category == RequestCategory.TASK:
+            return await self._task_agent_service.run(conversation_id)
+
+    def _analyze_user_request(self, conversation_id: ConversationId) -> AnalyzeUserRequestResult:
         conversation = self._conversation_repository.find_by_conversation_id(conversation_id)
         conversation.add(Message(role=Role.USER, content=self._build_content(conversation)))
         self._conversation_repository.save(conversation)
@@ -34,18 +43,10 @@ class EngineerAgentService:
             analyze_result = self._agent.analyze(conversation)
         self._logger.debug(analyze_result)
         self._logger.info("User request analysis completed")
-
-        if analyze_result.category == RequestCategory.CONVERSATION:
-            conversation.add(Message(Role.ASSISTANT, analyze_result.response))
-            conversation.add_response(AgentResponse(response=analyze_result.response))
-            self._conversation_repository.save(conversation)
-            return ChatResponse(analyze_result)
-
-        if analyze_result.category == RequestCategory.QUERY:
-            return await self._query_agent_service.run(conversation.id)
-        if analyze_result.category == RequestCategory.TASK:
-            return await self._task_agent_service.run(conversation.id)
-        return analyze_result.response
+        conversation.add(Message(Role.ASSISTANT, analyze_result.response))
+        conversation.add_response(AgentResponse(response=analyze_result.response))
+        self._conversation_repository.save(conversation)
+        return analyze_result
 
     def _build_content(self, conversation: Conversation) -> str:
         return f"""

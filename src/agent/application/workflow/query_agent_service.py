@@ -30,28 +30,33 @@ class QueryAgentService:
         self._tool_registry = tool_registry
 
     async def run(self, conversation_id: ConversationId) -> ChatResponse:
-        conversation = self._conversation_repository.find_by_conversation_id(conversation_id)
-        await self.analyze_query(conversation)
+        await self.analyze_query(conversation_id)
         return self._summarize_agent_service.run(conversation_id)
 
-    async def analyze_query(self, conversation: Conversation) -> ChatResponse:
+    async def analyze_query(self, conversation_id: ConversationId) -> ChatResponse:
+        conversation = self._conversation_repository.find_by_conversation_id(conversation_id)
         summary = "Unable to find user query response"
         tools = self._tool_registry.definitions()
         conversation.add(Message(role=Role.USER, content=self._build_content(conversation)))
+
         for _ in range(0, MAX_ITERATIONS):
-            with self._logger.status(message="Analyzing user request"):
+            with self._logger.status(message="Analyzing user query"):
                 result = self._agent.run(conversation, tools)
             self._logger.debug(result)
+
             if result.finished:
                 summary = result.content
                 break
+
             for tool_call in result.tools:
-                tool_result = await self._tool_executor.execute(tool_call)
-                self._logger.debug(tool_result)
                 conversation.add(Message(role=Role.ASSISTANT, content="", tool_calls=[tool_call]))
+                tool_result = await self._tool_executor.execute(tool_call)
                 conversation.add(Message(role=Role.TOOL, tool_name=tool_call.name, content=str(tool_result)))
+                self._logger.debug(tool_result)
+
             if result.content:
                 conversation.add(Message(role=Role.ASSISTANT, content=result.content))
+
             if not result.tools and not result.content:
                 conversation.add(
                     Message(
@@ -65,6 +70,7 @@ class QueryAgentService:
                         ),
                     )
                 )
+
         self._logger.info("Query analysis completed")
         conversation.add_response(AgentResponse(summary))
         self._conversation_repository.save(conversation)
