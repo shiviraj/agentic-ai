@@ -12,9 +12,10 @@ class Conversation(Aggregate[ConversationId]):
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
-    def add_message(self, message: Message) -> None:
+    def add_message(self, message: Message) -> "Conversation":
         self.messages.append(message)
         self.updated_at = datetime.now(timezone.utc)
+        return self
 
     @classmethod
     def create(cls) -> "Conversation":

@@ -1,5 +1,3 @@
-from uuid import UUID
-
 from agent.domain.aggregate.conversation import Conversation
 from agent.domain.repository.conversation_repository import ConversationRepository
 from agent.domain.vo.conversation_id import ConversationId
@@ -7,11 +5,11 @@ from agent.domain.vo.conversation_id import ConversationId
 
 class ConversationRepositoryImpl(ConversationRepository):
     def __init__(self) -> None:
-        self._conversations: dict[UUID, Conversation] = {}
+        self._conversations: dict[ConversationId, Conversation] = {}
 
     def save(self, conversation: Conversation) -> Conversation:
-        self._conversations[conversation.id.value] = conversation
+        self._conversations[conversation.id] = conversation
         return conversation
 
     def find_by_id(self, conversation_id: ConversationId) -> Conversation | None:
-        return self._conversations[conversation_id.value]
+        return self._conversations.get(conversation_id)

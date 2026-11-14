@@ -4,11 +4,12 @@ from typing import Any
 import httpx
 import ollama
 
-from agent.application.port.dto.llm_response import ChatResponse, ToolResponse
 from agent.application.port.llm_client import LLMClient
-from agent.domain.errors import LlmUnavailableError
 from agent.domain.entity.message import Message
+from agent.domain.errors import LlmUnavailableError
 from agent.domain.tool.tool import ToolCall
+from agent.domain.vo.chat_response import ChatResponse
+from agent.domain.vo.tool_response import ToolResponse
 from agent.infrastructure.llm.utils import to_ollama_payload
 
 

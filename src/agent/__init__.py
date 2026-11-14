@@ -8,9 +8,11 @@ from rich.console import Console
 
 from agent.application.service.conversation_context_service import ConversationContextService
 from agent.application.service.conversation_service import ConversationService
+from agent.application.workflow.conversation.conversation_workflow import ConversationWorkflow
 from agent.application.workflow.engineer.engineer_workflow import EngineerWorkflow
 from agent.application.workflow.workflow_input import WorkflowInput
-from agent.domain.aggregate.conversation import Conversation
+from agent.application.workflow.workflow_registry import WorkflowRegistry
+from agent.infrastructure.agents.conversation_agent_impl import ConversationAgentImpl
 from agent.infrastructure.agents.engineer_agent_impl import EngineerAgentImpl
 from agent.infrastructure.llm.llm_client_impl import LLMClientImpl
 from agent.infrastructure.persistence.conversation_repository_impl import ConversationRepositoryImpl
@@ -25,10 +27,6 @@ async def main() -> None:
     model = os.getenv("MODEL")
     host = os.getenv("API_URL")
     timeout = int(os.getenv("TIMEOUT", "60"))
-
-    conversation = Conversation.create()
-    conversation_repository = ConversationRepositoryImpl()
-    conversation_repository.save(conversation)
 
     ollama_client = OllamaClient(host=host, timeout=timeout)
     llm_client = LLMClientImpl(client=ollama_client, model=model)
@@ -94,12 +92,23 @@ async def main() -> None:
     #     task_agent_service=task_agent_service,
     # )
 
+    conversation_repository = ConversationRepositoryImpl()
     conversation_service = ConversationService(repository=conversation_repository)
     conversation_context_service = ConversationContextService(conversation_repository=conversation_repository)
+    conversation = conversation_service.create()
+
+    workflow_registry = WorkflowRegistry(
+        conversation_workflow=ConversationWorkflow(
+            agent=ConversationAgentImpl(llm_client=llm_client),
+            conversation_service=conversation_service,
+            conversation_context_service=conversation_context_service,
+        )
+    )
 
     engineer_workflow = EngineerWorkflow(
-        engineer_agent=EngineerAgentImpl(llm_client=llm_client),
+        agent=EngineerAgentImpl(llm_client=llm_client),
         conversation_service=conversation_service,
+        workflow_registry=workflow_registry,
         conversation_context_service=conversation_context_service,
     )
 
@@ -119,7 +128,7 @@ async def main() -> None:
                     WorkflowInput(conversation_id=conversation.id, user_request=request)
                 )
                 # conversation.stop_interaction(response)
-                console.print(f"\nAgent:\t{response}\n")
+                console.print(f"\nAgent:\t{response.content}\n")
             except KeyboardInterrupt:
                 logger.warn("Request interrupted.")
             except Exception as exc:

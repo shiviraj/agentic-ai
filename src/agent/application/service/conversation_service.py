@@ -11,14 +11,16 @@ class ConversationService:
     def __init__(self, repository: ConversationRepository):
         self._repository = repository
 
+    def create(self) -> Conversation:
+        conversation = Conversation.create()
+        self._repository.save(conversation)
+        return conversation
+
     def get_conversation(self, conversation_id: ConversationId) -> Conversation:
         conversation = self._repository.find_by_id(conversation_id)
         if conversation is None:
             raise DataNotFoundError(f"Conversation not found for {conversation_id}")
         return conversation
-
-    def save(self, conversation: Conversation) -> Conversation:
-        return self._repository.save(conversation)
 
     def add_user_message(self, conversation_id: ConversationId, content: str) -> Message:
         message = Message.create_text(role=Role.USER, content=content)
@@ -41,6 +43,5 @@ class ConversationService:
         conversation = self._repository.find_by_id(conversation_id)
         if conversation is None:
             raise DataNotFoundError(conversation_id)
-        conversation.add_message(message)
-        self._repository.save(conversation)
+        self._repository.save(conversation.add_message(message))
         return message
