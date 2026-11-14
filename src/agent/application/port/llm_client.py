@@ -3,6 +3,7 @@ from collections.abc import Sequence
 from typing import Any
 
 from agent.domain.entity.message import Message
+from agent.domain.tool.tool import ToolDefinition
 from agent.domain.vo.chat_response import ChatResponse
 from agent.domain.vo.tool_response import ToolResponse
 
@@ -19,7 +20,7 @@ class LLMClient(ABC):
         """
 
     @abstractmethod
-    def tool(self, messages: Sequence[Message], tools: list[dict[str, Any]]) -> ToolResponse:
+    def tool(self, messages: Sequence[Message], tools: list[ToolDefinition]) -> ToolResponse:
         """Send the messages, return the model's tool calls.
 
         Raises LlmUnavailableError if the model cannot be used.

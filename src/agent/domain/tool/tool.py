@@ -6,6 +6,7 @@ from typing import Any
 class ToolDefinition:
     """What a tool is: its name, what it does, and what input it accepts."""
 
+    provider: str
     name: str
     description: str
     input_schema: dict[str, Any]
@@ -15,6 +16,7 @@ class ToolDefinition:
 class ToolCall:
     """A request to run one tool with some arguments."""
 
+    provider: str
     name: str
     arguments: dict[str, Any] = field(default_factory=dict)
 

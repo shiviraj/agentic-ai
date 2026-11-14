@@ -1,4 +1,5 @@
 from agent.application.workflow.conversation.conversation_workflow import ConversationWorkflow
+from agent.application.workflow.query.query_workflow import QueryWorkflow
 from agent.application.workflow.workflow import Workflow
 from agent.application.workflow.workflow_input import WorkflowInput
 from agent.application.workflow.workflow_result import WorkflowResult
@@ -8,13 +9,16 @@ from agent.shared.logger.logger import Logger
 
 
 class WorkflowRegistry:
-    def __init__(self, conversation_workflow: ConversationWorkflow):
-        self._workflow_maps: dict[RequestType, Workflow] = {RequestType.CONVERSATION: conversation_workflow}
+    def __init__(self, conversation_workflow: ConversationWorkflow, query_workflow: QueryWorkflow):
+        self._workflow_maps: dict[RequestType, Workflow] = {
+            RequestType.CONVERSATION: conversation_workflow,
+            RequestType.QUERY: query_workflow,
+        }
         self._logger = Logger("WorkflowRegistry")
 
-    def execute_workflow(self, request_type: RequestType, data: WorkflowInput) -> WorkflowResult:
+    async def execute_workflow(self, request_type: RequestType, data: WorkflowInput) -> WorkflowResult:
         workflow = self._get_workflow(request_type=request_type)
-        return workflow.execute(data)
+        return await workflow.execute(data)
 
     def _get_workflow(self, request_type: RequestType) -> Workflow:
         workflow = self._workflow_maps.get(request_type)

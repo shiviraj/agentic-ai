@@ -1,11 +1,10 @@
 from dataclasses import dataclass
 from datetime import datetime
 
+from agent.domain.tool.tool import ToolCall, ToolResult
 from agent.domain.vo.message_id import MessageId
 from agent.domain.vo.message_type import MessageType
 from agent.domain.vo.role import Role
-from agent.domain.vo.tool_call import ToolCall
-from agent.domain.vo.tool_call_id import ToolCallId
 from agent.shared.domain.aggregate import Aggregate
 
 
@@ -18,20 +17,19 @@ class Message(Aggregate[MessageId]):
 
     agent_name: str | None = None
     tool_calls: tuple[ToolCall, ...] = ()
-    tool_call_id: ToolCallId | None = None
-    tool_name: str | None = None
+    tool: ToolCall | None = None
 
     @classmethod
     def create_text(cls, role: Role, content: str | None) -> "Message":
         return Message.create(role=role, content=content, message_type=MessageType.TEXT)
 
     @classmethod
-    def create_tool(cls, role: Role, content: str | None) -> "Message":
-        return Message.create(role=role, content=content, message_type=MessageType.TEXT)
+    def create_tools(cls, tools: list[ToolCall]) -> "Message":
+        return Message.create(role=Role.ASSISTANT, content="", message_type=MessageType.TOOL_CALL, tool_calls=tools)
 
     @classmethod
-    def create_tool_result(cls, role: Role, content: str | None) -> "Message":
-        return Message.create(role=role, content=content, message_type=MessageType.TEXT)
+    def create_tool_result(cls, tool: ToolCall, tool_result: ToolResult) -> "Message":
+        return Message.create(role=Role.TOOL, content=str(tool_result), tool=tool, message_type=MessageType.TOOL_RESULT)
 
     @classmethod
     def create(
@@ -41,8 +39,7 @@ class Message(Aggregate[MessageId]):
         content: str | None,
         agent_name: str | None = None,
         tool_calls: tuple[ToolCall, ...] = (),
-        tool_call_id: ToolCallId | None = None,
-        tool_name: str | None = None,
+        tool: ToolCall | None = None,
     ) -> "Message":
         return cls(
             id=MessageId.generate(),
@@ -52,6 +49,5 @@ class Message(Aggregate[MessageId]):
             created_at=datetime.now(),
             agent_name=agent_name,
             tool_calls=tool_calls,
-            tool_call_id=tool_call_id,
-            tool_name=tool_name,
+            tool=tool,
         )

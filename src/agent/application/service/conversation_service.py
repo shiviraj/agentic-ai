@@ -2,9 +2,11 @@ from agent.domain.aggregate.conversation import Conversation
 from agent.domain.entity.message import Message
 from agent.domain.errors import DataNotFoundError
 from agent.domain.repository.conversation_repository import ConversationRepository
+from agent.domain.tool.tool import ToolCall
 from agent.domain.vo.conversation_id import ConversationId
 from agent.domain.vo.message_type import MessageType
 from agent.domain.vo.role import Role
+from agent.domain.vo.tool_result import ToolResult
 
 
 class ConversationService:
@@ -37,6 +39,14 @@ class ConversationService:
 
     def add_assistant_message(self, conversation_id: ConversationId, content: str) -> Message:
         message = Message.create(role=Role.ASSISTANT, message_type=MessageType.TEXT, content=content)
+        return self._add_message(conversation_id, message)
+
+    def add_tool_calls(self, conversation_id: ConversationId, tools: list[ToolCall]) -> Message:
+        message = Message.create_tools(tools=tools)
+        return self._add_message(conversation_id, message)
+
+    def add_tool_result(self, conversation_id: ConversationId, tool: ToolCall, tool_result: ToolResult) -> Message:
+        message = Message.create_tool_result(tool=tool, tool_result=tool_result)
         return self._add_message(conversation_id, message)
 
     def _add_message(self, conversation_id: ConversationId, message: Message) -> Message:

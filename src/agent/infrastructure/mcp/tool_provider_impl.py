@@ -6,8 +6,13 @@ from agent.domain.tool.tool_provider import ToolProvider
 
 
 class ToolProviderImpl(ToolProvider):
-    def __init__(self, client: Client) -> None:
+    def __init__(self, client: Client, server_name: str) -> None:
         self._client = client
+        self._server_name = server_name
+
+    @property
+    def server_name(self) -> str:
+        return self._server_name
 
     async def list_tools(self) -> list[ToolDefinition]:
         try:
@@ -16,6 +21,7 @@ class ToolProviderImpl(ToolProvider):
             raise ToolProviderError(f"Could not list tools: {error}") from error
         return [
             ToolDefinition(
+                provider=self._server_name,
                 name=tool.name,
                 description=tool.description or "",
                 input_schema=tool.input_schema,

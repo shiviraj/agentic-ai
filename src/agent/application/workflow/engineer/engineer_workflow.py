@@ -23,7 +23,7 @@ class EngineerWorkflow(Workflow):
         self._workflow_registry = workflow_registry
         self._logger = Logger("EngineerWorkflow")
 
-    def execute(self, data: WorkflowInput) -> WorkflowResult:
+    async def execute(self, data: WorkflowInput) -> WorkflowResult:
         self._conversation_service.add_user_message(data.conversation_id, self._build_prompt(data.user_request))
         with self._logger.status("Classifying user request..."):
             context = self._conversation_context_service.get_context(data.conversation_id)
@@ -34,8 +34,7 @@ class EngineerWorkflow(Workflow):
             data.conversation_id, agent_name="EngineerAgent", response=classification
         )
         self._logger.info("Successfully classified user request")
-        response = self._workflow_registry.execute_workflow(classification.request_type, data)
-        self._conversation_service.add_assistant_message(data.conversation_id, response.content)
+        response = await self._workflow_registry.execute_workflow(classification.request_type, data)
         return response
 
     def _build_prompt(self, user_request: UserRequest) -> str:

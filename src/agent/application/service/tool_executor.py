@@ -15,7 +15,7 @@ class ToolExecutor:
 
     async def execute(self, call: ToolCall) -> ToolResult:
         try:
-            provider = self._registry.provider_for(call.name)
+            provider = self._registry.provider_for(call.provider)
             return await provider.call_tool(call)
         except ToolNotFoundError as error:
             return ToolResult.failure(str(error))

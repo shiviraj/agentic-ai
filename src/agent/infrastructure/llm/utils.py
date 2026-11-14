@@ -11,7 +11,7 @@ def to_ollama_tools(definitions: list[ToolDefinition]) -> list[dict[str, Any]]:
         {
             "type": "function",
             "function": {
-                "name": definition.name,
+                "name": f"{definition.provider}::{definition.name}",
                 "description": definition.description,
                 "parameters": definition.input_schema,
             },
@@ -39,7 +39,7 @@ def to_ollama_payload(messages: list[Message]) -> list[dict]:
             item["tool_calls"] = [
                 {
                     "function": {
-                        "name": tool_call.name,
+                        "name": f"{tool_call.provider}::{tool_call.name}",
                         "arguments": tool_call.arguments,
                     }
                 }
@@ -47,8 +47,8 @@ def to_ollama_payload(messages: list[Message]) -> list[dict]:
             ]
 
         elif message.message_type == MessageType.TOOL_RESULT:
-            if message.tool_name is not None:
-                item["tool_name"] = message.tool_name
+            if message.tool is not None:
+                item["tool_name"] = f"{message.tool.provider}::{message.tool.name}"
 
         payload.append(item)
 

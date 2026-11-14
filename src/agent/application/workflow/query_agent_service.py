@@ -1,12 +1,12 @@
-from agent.domain.agent.query_agent import QueryAgent
-from agent.application.port.dto.llm_response import ChatResponse
 from agent.application.service.summarize_agent_service import SummarizeAgentService
 from agent.application.service.tool_executor import ToolExecutor
+from agent.domain.agent.query_agent import QueryAgent
 from agent.domain.aggregate.conversation import Conversation
 from agent.domain.entity.message import Message, Role
 from agent.domain.repository.conversation_repository import ConversationRepository
 from agent.domain.tool.tool_registry import ToolRegistry
 from agent.domain.vo.agent_response import AgentResponse
+from agent.domain.vo.chat_response import ChatResponse
 from agent.domain.vo.conversation_id import ConversationId
 from agent.shared.logger.logger import Logger
 

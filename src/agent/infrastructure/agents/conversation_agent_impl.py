@@ -12,8 +12,5 @@ class ConversationAgentImpl(ConversationAgent):
         self._system_prompt = load_prompt("conversation_agent")
 
     def execute(self, context: list[Message]) -> ChatResponse:
-        messages = [
-            Message.create_text(role=Role.SYSTEM, content=self._system_prompt),
-            *context,
-        ]
+        messages = [Message.create_text(role=Role.SYSTEM, content=self._system_prompt), *context]
         return self._llm_client.chat(messages=messages)
