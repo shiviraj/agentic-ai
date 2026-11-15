@@ -1,4 +1,5 @@
 from agent.application.service.engineer_service import EngineerService
+from agent.application.service.response_service import ResponseService
 from agent.application.workflow.workflow import Workflow
 from agent.application.workflow.workflow_input import WorkflowInput
 from agent.application.workflow.workflow_registry import WorkflowRegistry
@@ -11,16 +12,19 @@ class EngineerWorkflow(Workflow):
     def __init__(
         self,
         workflow_registry: WorkflowRegistry,
-        engineer_service: EngineerService
+        engineer_service: EngineerService,
+        response_service: ResponseService
     ):
         self._engineer_service = engineer_service
+        self._response_service = response_service
         self._workflow_registry = workflow_registry
         self._logger = Logger("EngineerWorkflow")
 
     async def execute(self, data: WorkflowInput) -> WorkflowResult:
         classification = self._engineer_service.execute(data)
-        response = await self._workflow_registry.execute_workflow(classification.request_type, data)
-        return response
+        await self._workflow_registry.execute_workflow(classification.request_type, data)
+        response = self._response_service.execute(data)
+        return WorkflowResult(response.content)
 
     def _build_prompt(self, user_request: UserRequest) -> str:
         return f"""

@@ -13,7 +13,7 @@ T = TypeVar("T")
 
 
 class LLMAgent:
-    def __init__(self, llm: LLMClient, system_prompt: str, max_attempts: int = 3) -> None:
+    def __init__(self, llm: LLMClient, system_prompt: str, max_attempts: int = 5) -> None:
         if max_attempts < 1:
             raise ValueError("max_attempts must be at least 1")
         self._llm = llm
@@ -30,7 +30,6 @@ class LLMAgent:
                 return parser.parse(reply)
             except InvalidAgentResponseError as e:
                 last_error = e
-                # Show the model its own bad answer and what was wrong with it
                 messages.append(Message.create_text(Role.ASSISTANT, reply))
                 messages.append(
                     Message.create_text(
@@ -62,7 +61,7 @@ class LLMAgent:
 
             if response.tools and response.tools[0].name == FINISH_TOOL_DEFINITION.name:
                 response.finished = True
-                response.content = response.tools[0].arguments["content"]
+                response.content = response.tools[0].arguments["summary"]
                 response.tools = []
             return response
 

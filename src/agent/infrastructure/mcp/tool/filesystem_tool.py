@@ -26,7 +26,7 @@ class FilesystemTools:
     def __init__(self, root: Path) -> None:
         self._root = root.resolve()
 
-    def inspect_project(self, directory: str = ".") -> str:
+    def inspect_project(self, directory: str = ".") -> dict[str, object]:
         path = (self._root / directory).resolve()
         if not path.is_relative_to(self._root):
             raise FilesystemToolError(f"Path is outside the project root: {directory}")
@@ -46,15 +46,10 @@ class FilesystemTools:
                 relative_path = full_path.relative_to(self._root).as_posix()
 
                 files.append(relative_path)
-
-                if len(files) >= MAX_LISTED_FILES:
-                    files.sort()
-                    return "\n".join(files) + f"\n... truncated at {MAX_LISTED_FILES} files"
-
         files.sort()
-        return "\n".join(files) if files else "No files found."
+        return {"directory": directory, "files": files}
 
-    def read_file(self, relative_path: str) -> str:
+    def read_file(self, relative_path: str) -> dict[str, object]:
         file_path = self._resolve(relative_path)
 
         if not file_path.is_file():
@@ -64,7 +59,7 @@ class FilesystemTools:
             raise FilesystemToolError(f"File is too large (limit {MAX_FILE_BYTES} bytes): {relative_path}")
 
         try:
-            return file_path.read_text(encoding="utf-8")
+            return {"path": relative_path, "content": file_path.read_text(encoding="utf-8")}
 
         except UnicodeDecodeError:
             raise FilesystemToolError(f"Not a UTF-8 text file: {relative_path}") from None

@@ -5,21 +5,12 @@ FINISH_TOOL_DEFINITION = ToolDefinition(
     name="finish",
     description="Terminate the current investigation and return its findings. "
     "You MUST call this tool when sufficient information has been "
-    "collected or when further investigation is not possible. "
-    "Do not return a normal text response.",
+    "collected or when further tool call is not possible. ",
     input_schema={
         "type": "object",
         "properties": {
-            "status": {
-                "type": "string",
-                "enum": ["completed", "partial", "failed"],
-                "description": "Investigation completion status.",
-            },
-            "content": {"type": "string", "description": "A detailed summary of the investigation."},
+            "summary": {"type": "string", "description": "A detailed summary of the investigation."},
         },
-        "required": [
-            "status",
-            "content",
-        ],
+        "required": ["summary"],
     },
 )

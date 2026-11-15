@@ -33,7 +33,5 @@ class ToolProviderImpl(ToolProvider):
         try:
             result = await self._client.call_tool(call.name, dict(call.arguments), raise_on_error=False)
         except Exception as error:  # connection lost, server crashed, ...
-            raise ToolProviderError(f"Call to '{call.name}' failed: {error}") from error
-
-        texts = [text for block in result.content if (text := getattr(block, "text", None))]
-        return ToolResult(content="\n".join(texts), is_error=result.is_error)
+            return ToolResult.failure(error=error)
+        return ToolResult.success(content=result.data)

@@ -13,6 +13,7 @@ from agent.application.service.conversation_context_service import ConversationC
 from agent.application.service.conversation_service import ConversationService
 from agent.application.service.engineer_service import EngineerService
 from agent.application.service.investigation_service import InvestigationService
+from agent.application.service.response_service import ResponseService
 from agent.application.service.tool_executor import ToolExecutor
 from agent.application.workflow.conversation.conversation_workflow import ConversationWorkflow
 from agent.application.workflow.engineer.engineer_workflow import EngineerWorkflow
@@ -55,53 +56,6 @@ async def main() -> None:
     await tool_registry.register_provider(provider=provider)
     tool_executor = ToolExecutor(registry=tool_registry)
 
-    # engineer_agent = EngineerAgentImpl(llm_client=llm_client)
-    # query_agent = QueryAgentImpl(llm_client=llm_client)
-    # summary_agent = SummaryAgentImpl(llm_client=llm_client)
-    # task_agent = TaskAgentImpl(llm_client=llm_client)
-    # task_decomposition_agent = TaskDecompositionAgentImpl(llm_client=llm_client)
-    # subtask_planning_agent = SubtaskPlanningAgentImpl(llm_client=llm_client)
-
-    # summarize_agent_service = SummarizeAgentService(
-    #     agent=summary_agent,
-    #     conversation_repository=conversation_repository,
-    # )
-    # query_agent_service = QueryAgentService(
-    #     agent=query_agent,
-    #     summarize_agent_service=summarize_agent_service,
-    #     conversation_repository=conversation_repository,
-    #     tool_executor=tool_executor,
-    #     tool_registry=tool_registry,
-    # )
-    # task_decomposition_service = TaskDecompositionService(
-    #     agent=task_decomposition_agent,
-    #     conversation_repository=conversation_repository,
-    # )
-    # analyze_task_service = AnalyzeTaskService(
-    #     agent=task_agent,
-    #     policy=TaskAnalysisPolicy(),
-    #     query_agent_service=query_agent_service,
-    #     conversation_repository=conversation_repository,
-    # )
-    # plan_subtask_service = PlanSubtaskService(
-    #     agent=subtask_planning_agent,
-    #     conversation_repository=conversation_repository,
-    # )
-    # task_agent_service = TaskAgentService(
-    #     analyze_task_service=analyze_task_service,
-    #     task_decomposition_service=task_decomposition_service,
-    #     query_agent_service=query_agent_service,
-    #     plan_subtask_service=plan_subtask_service,
-    #     summarize_agent_service=summarize_agent_service,
-    #     conversation_repository=conversation_repository,
-    # )
-    # engineer_agent_service = EngineerAgentService(
-    #     agent=engineer_agent,
-    #     query_agent_service=query_agent_service,
-    #     conversation_repository=conversation_repository,
-    #     task_agent_service=task_agent_service,
-    # )
-
     conversation_repository = ConversationRepositoryImpl()
     conversation_service = ConversationService(repository=conversation_repository)
     conversation_context_service = ConversationContextService(conversation_repository=conversation_repository)
@@ -114,6 +68,11 @@ async def main() -> None:
         tool_registry=tool_registry,
         tool_executor=tool_executor,
     )
+    response_service = ResponseService(
+        agent=ConversationAgentImpl(llm_client=llm_client),
+        conversation_service=conversation_service,
+        conversation_context_service=conversation_context_service,
+    )
     engineer_service = EngineerService(
         agent=EngineerAgentImpl(llm_client=llm_client),
         conversation_service=conversation_service,
@@ -121,16 +80,13 @@ async def main() -> None:
     )
 
     workflow_registry = WorkflowRegistry(
-        conversation_workflow=ConversationWorkflow(
-            agent=ConversationAgentImpl(llm_client=llm_client),
-            conversation_service=conversation_service,
-            conversation_context_service=conversation_context_service,
-        ),
+        conversation_workflow=ConversationWorkflow(),
         query_workflow=QueryWorkflow(investigation_service=investigation_service),
     )
 
     engineer_workflow = EngineerWorkflow(
         engineer_service=engineer_service,
+        response_service=response_service,
         workflow_registry=workflow_registry,
     )
 

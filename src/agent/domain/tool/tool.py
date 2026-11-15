@@ -24,15 +24,14 @@ class ToolCall:
 
 @dataclass(frozen=True)
 class ToolResult:
-    """What came back from a tool. Errors are normal results, not exceptions."""
-
-    content: str
+    content: dict[str, object]
+    error: Exception | None = None
     is_error: bool = False
 
     @classmethod
-    def success(cls, content: str) -> "ToolResult":
+    def success(cls, content: dict[str, object]) -> "ToolResult":
         return cls(content=content)
 
     @classmethod
-    def failure(cls, message: str) -> "ToolResult":
-        return cls(content=message, is_error=True)
+    def failure(cls, error: Exception) -> "ToolResult":
+        return cls(content={"message": "There is an error in tool result"}, is_error=True, error=error)

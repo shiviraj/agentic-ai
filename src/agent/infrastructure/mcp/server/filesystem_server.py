@@ -16,7 +16,7 @@ def create_server(root: Path) -> FastMCP:
     server = FastMCP("filesystem")
 
     @server.tool
-    def inspect_project(path: str) -> str:
+    def inspect_project(path: str) -> dict[str, object]:
         """Inspect the project structure.
 
         Recursively lists all project files using paths relative
@@ -33,7 +33,7 @@ def create_server(root: Path) -> FastMCP:
             raise ToolError(str(error)) from error
 
     @server.tool
-    def read_file(path: str) -> str:
+    def read_file(path: str) -> dict[str, object]:
         """Read the full text content of a project file.
 
         The path must be relative to the project root.
