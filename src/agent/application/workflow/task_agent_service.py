@@ -1,10 +1,10 @@
-from agent.application.service.analyze_task_service import AnalyzeTaskService
+from agent.application.service.analysis_service import AnalyzeTaskService
 from agent.application.service.plan_subtask_service import PlanSubtaskService
 from agent.application.service.summarize_agent_service import SummarizeAgentService
 from agent.application.service.task_decomposition_service import TaskDecompositionService
 from agent.domain.repository.conversation_repository import ConversationRepository
 from agent.domain.vo.conversation_id import ConversationId
-from agent.domain.vo.task_analysis import TaskAnalysisStatus
+from agent.domain.vo.task_analysis import AnalysisStatus
 from agent.shared.logger.logger import Logger
 
 
@@ -28,7 +28,7 @@ class TaskAgentService:
 
     async def run(self, conversation_id: ConversationId) -> ChatResponse:
         analysis_result = await self._analyze_task_service.run(conversation_id=conversation_id)
-        if analysis_result.status == TaskAnalysisStatus.NEEDS_CLARIFICATION:
+        if analysis_result.status == AnalysisStatus.NEEDS_CLARIFICATION:
             return self._summarize_agent_service.run(conversation_id)
 
         task = self._task_decomposition_service.run(conversation_id)

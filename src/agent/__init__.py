@@ -9,6 +9,7 @@ from ollama import Client as OllamaClient
 from prompt_toolkit import PromptSession
 from rich.console import Console
 
+from agent.application.service.analysis_service import AnalysisService
 from agent.application.service.conversation_context_service import ConversationContextService
 from agent.application.service.conversation_service import ConversationService
 from agent.application.service.engineer_service import EngineerService
@@ -18,9 +19,11 @@ from agent.application.service.tool_executor import ToolExecutor
 from agent.application.workflow.conversation.conversation_workflow import ConversationWorkflow
 from agent.application.workflow.engineer.engineer_workflow import EngineerWorkflow
 from agent.application.workflow.query.query_workflow import QueryWorkflow
+from agent.application.workflow.task.task_workflow import TaskWorkflow
 from agent.application.workflow.workflow_input import WorkflowInput
 from agent.application.workflow.workflow_registry import WorkflowRegistry
 from agent.domain.tool.tool_registry import ToolRegistry
+from agent.infrastructure.agents.analysis_agent_impl import AnalysisAgentImpl
 from agent.infrastructure.agents.conversation_agent_impl import ConversationAgentImpl
 from agent.infrastructure.agents.engineer_agent_impl import EngineerAgentImpl
 from agent.infrastructure.agents.investigation_agent_impl import InvestigationAgentImpl
@@ -78,10 +81,17 @@ async def main() -> None:
         conversation_service=conversation_service,
         conversation_context_service=conversation_context_service,
     )
+    analysis_service = AnalysisService(
+        agent=AnalysisAgentImpl(llm_client=llm_client),
+        conversation_service=conversation_service,
+        conversation_context_service=conversation_context_service,
+        investigation_service=investigation_service,
+    )
 
     workflow_registry = WorkflowRegistry(
         conversation_workflow=ConversationWorkflow(),
         query_workflow=QueryWorkflow(investigation_service=investigation_service),
+        task_workflow=TaskWorkflow(analysis_service),
     )
 
     engineer_workflow = EngineerWorkflow(

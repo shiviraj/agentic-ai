@@ -22,7 +22,7 @@ class LLMAgent:
 
     def _ask_json(self, context: tuple[Message, ...], parser: OutputParser[T]) -> T:
         messages = [Message.create_text(role=Role.SYSTEM, content=self._system_prompt), *context]
-        last_error: InvalidAgentResponseError | None = None
+        last_error: Exception | None = None
 
         for _ in range(self._max_attempts):
             reply = self._llm.chat(messages, parser.schema)

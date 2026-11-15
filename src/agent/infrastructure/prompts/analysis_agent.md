@@ -102,7 +102,7 @@ Only include essential questions. Avoid speculative, redundant, or non-blocking 
 
 Return only structured task analysis containing:
 
-- `task_summary` with findings for open questions
+- `summary` with findings for open questions
 - `expected_outcome`
 - `open_questions`
 - `status`

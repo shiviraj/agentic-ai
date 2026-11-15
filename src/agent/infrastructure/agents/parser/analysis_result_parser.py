@@ -3,23 +3,23 @@ from typing import Any
 
 from agent.domain.errors import InvalidAgentResponseError
 from agent.domain.vo.task_analysis import (
+    AnalysisResult,
+    AnalysisStatus,
     OpenQuestion,
     OpenQuestionCategory,
     QuestionPriority,
-    TaskAnalysis,
-    TaskAnalysisStatus,
 )
 from agent.infrastructure.agents.parser.field_check import require_str
 from agent.infrastructure.agents.parser.output_parser import OutputParser
 
 
-class AnalyzeTaskParser(OutputParser[TaskAnalysis]):
+class AnalysisResultParser(OutputParser[AnalysisResult]):
     @property
     def schema(self) -> dict[str, Any]:
         return {
             "type": "object",
             "properties": {
-                "task_summary": {"type": "string"},
+                "summary": {"type": "string"},
                 "expected_outcome": {"type": "string"},
                 "open_questions": {
                     "type": "array",
@@ -36,26 +36,26 @@ class AnalyzeTaskParser(OutputParser[TaskAnalysis]):
                 },
                 "status": {
                     "type": "string",
-                    "enum": [e.value for e in TaskAnalysisStatus],
+                    "enum": [e.value for e in AnalysisStatus],
                 },
             },
-            "required": ["task_summary", "expected_outcome", "open_questions", "status"],
+            "required": ["summary", "expected_outcome", "open_questions", "status"],
         }
 
-    def parse(self, raw: str) -> TaskAnalysis:
+    def parse(self, raw: str) -> AnalysisResult:
         try:
             data = json.loads(raw)
-            status = TaskAnalysisStatus(require_str(data, "status"))
-            task_summary = require_str(data, "task_summary", min_length=10)
+            status = AnalysisStatus(require_str(data, "status"))
+            summary = require_str(data, "summary", min_length=10)
             expected_outcome = require_str(data, "expected_outcome", min_length=10)
             raw_questions = data.get("open_questions")
             if not isinstance(raw_questions, list):
                 raise ValueError("'open_questions' must be an array.")
-            open_questions = tuple(self._parse_open_question(question) for question in raw_questions)
+            open_questions = [self._parse_open_question(question) for question in raw_questions]
 
-            return TaskAnalysis(
+            return AnalysisResult(
                 status=status,
-                task_summary=task_summary,
+                summary=summary,
                 expected_outcome=expected_outcome,
                 open_questions=open_questions,
             )
