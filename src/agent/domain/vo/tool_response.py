@@ -7,3 +7,4 @@ from agent.domain.tool.tool import ToolCall
 class ToolResponse:
     content: str
     tools: list[ToolCall]
+    finished: bool

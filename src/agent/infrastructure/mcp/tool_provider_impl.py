@@ -31,7 +31,7 @@ class ToolProviderImpl(ToolProvider):
 
     async def call_tool(self, call: ToolCall) -> ToolResult:
         try:
-            result = await self._client.call_tool(call.name, call.arguments, raise_on_error=False)
+            result = await self._client.call_tool(call.name, dict(call.arguments), raise_on_error=False)
         except Exception as error:  # connection lost, server crashed, ...
             raise ToolProviderError(f"Call to '{call.name}' failed: {error}") from error
 

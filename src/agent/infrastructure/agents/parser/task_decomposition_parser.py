@@ -4,7 +4,7 @@ from typing import Any
 from agent.domain.aggregate.task import Task
 from agent.domain.entity.subtask import Subtask
 from agent.domain.errors import InvalidAgentResponseError
-from agent.infrastructure.agents.field_check import require_str
+from agent.infrastructure.agents.parser.field_check import require_str
 from agent.infrastructure.agents.parser.output_parser import OutputParser
 
 

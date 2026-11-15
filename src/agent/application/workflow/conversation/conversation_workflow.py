@@ -20,7 +20,7 @@ class ConversationWorkflow(Workflow):
         self._conversation_context_service = conversation_context_service
         self._logger = Logger("ConversationWorkflow")
 
-    def execute(self, data: WorkflowInput) -> WorkflowResult:
+    async def execute(self, data: WorkflowInput) -> WorkflowResult:
         self._conversation_service.add_user_message(data.conversation_id, self._build_prompt(data.user_request))
         with self._logger.status("Generating response for user request..."):
             context = self._conversation_context_service.get_context(data.conversation_id)

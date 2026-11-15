@@ -1,10 +1,8 @@
-from agent.application.service.conversation_context_service import ConversationContextService
-from agent.application.service.conversation_service import ConversationService
+from agent.application.service.engineer_service import EngineerService
 from agent.application.workflow.workflow import Workflow
 from agent.application.workflow.workflow_input import WorkflowInput
 from agent.application.workflow.workflow_registry import WorkflowRegistry
 from agent.application.workflow.workflow_result import WorkflowResult
-from agent.domain.agent.engineer_agent import EngineerAgent
 from agent.domain.vo.user_request import UserRequest
 from agent.shared.logger.logger import Logger
 
@@ -12,28 +10,15 @@ from agent.shared.logger.logger import Logger
 class EngineerWorkflow(Workflow):
     def __init__(
         self,
-        agent: EngineerAgent,
         workflow_registry: WorkflowRegistry,
-        conversation_service: ConversationService,
-        conversation_context_service: ConversationContextService,
+        engineer_service: EngineerService
     ):
-        self._agent = agent
-        self._conversation_service = conversation_service
-        self._conversation_context_service = conversation_context_service
+        self._engineer_service = engineer_service
         self._workflow_registry = workflow_registry
         self._logger = Logger("EngineerWorkflow")
 
     async def execute(self, data: WorkflowInput) -> WorkflowResult:
-        self._conversation_service.add_user_message(data.conversation_id, self._build_prompt(data.user_request))
-        with self._logger.status("Classifying user request..."):
-            context = self._conversation_context_service.get_context(data.conversation_id)
-            classification = self._agent.execute(context)
-
-        self._logger.debug(classification)
-        self._conversation_service.add_agent_response(
-            data.conversation_id, agent_name="EngineerAgent", response=classification
-        )
-        self._logger.info("Successfully classified user request")
+        classification = self._engineer_service.execute(data)
         response = await self._workflow_registry.execute_workflow(classification.request_type, data)
         return response
 

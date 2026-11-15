@@ -1,5 +1,6 @@
 from datetime import datetime
 from enum import Enum
+from typing import Any
 
 from rich.console import Console
 from rich.status import Status
@@ -20,7 +21,7 @@ class Logger:
         self._name = name
         self._console = Console()
 
-    def debug(self, message: str, tag: str = "dim") -> None:
+    def debug(self, message: Any, tag: str = "dim") -> None:
         if DEBUG_ENABLED:
             self._console.print(self._get_message(message, tag, LogLevel.DEBUG))
 

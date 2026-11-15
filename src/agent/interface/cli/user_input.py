@@ -1,3 +1,5 @@
+from typing import Any
+
 from prompt_toolkit import PromptSession
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.key_binding import KeyBindings
@@ -14,11 +16,11 @@ def create_key_bindings() -> KeyBindings:
     bindings = KeyBindings()
 
     @bindings.add(Keys.Enter)
-    def submit_on_enter(event) -> None:
+    def submit_on_enter(event: Any) -> None:
         event.current_buffer.validate_and_handle()
 
     @bindings.add(Keys.Escape, Keys.Enter)
-    def newline_on_alt_enter(event) -> None:
+    def newline_on_alt_enter(event: Any) -> None:
         event.current_buffer.insert_text("\n")
 
     return bindings

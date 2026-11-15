@@ -3,12 +3,12 @@ from typing import Any
 
 import httpx
 import ollama
+from ollama import Client as OllamaClient
 
 from agent.application.port.llm_client import LLMClient
 from agent.domain.entity.message import Message
 from agent.domain.errors import LlmUnavailableError
 from agent.domain.tool.tool import ToolCall, ToolDefinition
-from agent.domain.vo.chat_response import ChatResponse
 from agent.domain.vo.tool_response import ToolResponse
 from agent.infrastructure.llm.utils import to_ollama_payload, to_ollama_tools
 
@@ -16,7 +16,7 @@ from agent.infrastructure.llm.utils import to_ollama_payload, to_ollama_tools
 class LLMClientImpl(LLMClient):
     def __init__(
         self,
-        client: Any,  # lets tests pass a fake client
+        client: OllamaClient,
         model: str,
         num_ctx: int = 8192,
         temperature: float = 0.2,
@@ -26,7 +26,7 @@ class LLMClientImpl(LLMClient):
         self._temperature = temperature
         self._client = client
 
-    def chat(self, messages: Sequence[Message], schema: dict[str, Any] | None = None) -> ChatResponse:
+    def chat(self, messages: Sequence[Message], schema: dict[str, Any] | None = None) -> str:
         try:
             response = self._client.chat(
                 model=self._model,
@@ -43,9 +43,9 @@ class LLMClientImpl(LLMClient):
         content = response.message.content
         if not content or not content.strip():
             raise LlmUnavailableError(f"Model '{self._model}' returned an empty answer")
-        return ChatResponse(content)
+        return content
 
-    def tool(self, messages: Sequence[Message], tools: list[ToolDefinition]) -> ToolResponse:
+    def tool(self, messages: Sequence[Message], tools: Sequence[ToolDefinition]) -> ToolResponse:
         try:
             response = self._client.chat(
                 model=self._model,
@@ -59,7 +59,7 @@ class LLMClientImpl(LLMClient):
         except (ollama.ResponseError, ConnectionError, httpx.HTTPError) as e:
             raise LlmUnavailableError(f"Ollama call failed for model '{self._model}': {e}") from e
 
-        content = response.message.content
+        content = response.message.content or ""
         tool_calls = [
             ToolCall(
                 provider=tool_call.function.name.split("::")[0],
@@ -68,4 +68,4 @@ class LLMClientImpl(LLMClient):
             )
             for tool_call in response.message.tool_calls or []
         ]
-        return ToolResponse(content=content, tools=tool_calls)
+        return ToolResponse(content=content, tools=tool_calls, finished=False)

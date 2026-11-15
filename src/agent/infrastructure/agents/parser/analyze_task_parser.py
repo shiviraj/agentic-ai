@@ -9,7 +9,7 @@ from agent.domain.vo.task_analysis import (
     TaskAnalysis,
     TaskAnalysisStatus,
 )
-from agent.infrastructure.agents.field_check import require_str
+from agent.infrastructure.agents.parser.field_check import require_str
 from agent.infrastructure.agents.parser.output_parser import OutputParser
 
 

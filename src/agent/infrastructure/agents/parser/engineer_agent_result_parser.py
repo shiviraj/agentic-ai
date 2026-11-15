@@ -3,7 +3,7 @@ from typing import Any
 
 from agent.domain.agent.dto.engineer_agent_result import EngineerAgentResult, RequestType
 from agent.domain.errors import InvalidAgentResponseError
-from agent.infrastructure.agents.field_check import require_str
+from agent.infrastructure.agents.parser.field_check import require_str
 from agent.infrastructure.agents.parser.output_parser import OutputParser
 
 

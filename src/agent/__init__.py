@@ -11,6 +11,7 @@ from rich.console import Console
 
 from agent.application.service.conversation_context_service import ConversationContextService
 from agent.application.service.conversation_service import ConversationService
+from agent.application.service.engineer_service import EngineerService
 from agent.application.service.investigation_service import InvestigationService
 from agent.application.service.tool_executor import ToolExecutor
 from agent.application.workflow.conversation.conversation_workflow import ConversationWorkflow
@@ -113,6 +114,11 @@ async def main() -> None:
         tool_registry=tool_registry,
         tool_executor=tool_executor,
     )
+    engineer_service = EngineerService(
+        agent=EngineerAgentImpl(llm_client=llm_client),
+        conversation_service=conversation_service,
+        conversation_context_service=conversation_context_service,
+    )
 
     workflow_registry = WorkflowRegistry(
         conversation_workflow=ConversationWorkflow(
@@ -124,10 +130,8 @@ async def main() -> None:
     )
 
     engineer_workflow = EngineerWorkflow(
-        agent=EngineerAgentImpl(llm_client=llm_client),
-        conversation_service=conversation_service,
+        engineer_service=engineer_service,
         workflow_registry=workflow_registry,
-        conversation_context_service=conversation_context_service,
     )
 
     try:

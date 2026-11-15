@@ -1,3 +1,4 @@
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -18,7 +19,7 @@ class ToolCall:
 
     provider: str
     name: str
-    arguments: dict[str, Any] = field(default_factory=dict)
+    arguments: Mapping[str, Any] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)

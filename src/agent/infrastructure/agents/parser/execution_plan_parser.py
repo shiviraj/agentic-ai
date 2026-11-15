@@ -3,7 +3,7 @@ from typing import Any
 
 from agent.domain.aggregate.execution_plan import ExecutionAgent, ExecutionPlan, ExecutionStep
 from agent.domain.errors import InvalidAgentResponseError
-from agent.infrastructure.agents.field_check import require_str
+from agent.infrastructure.agents.parser.field_check import require_str
 from agent.infrastructure.agents.parser.output_parser import OutputParser
 
 

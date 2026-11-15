@@ -16,11 +16,11 @@ class ToolRegistry:
         for definition in definitions:
             self._definitions[definition.name] = definition
 
-    def definitions(self) -> list[ToolDefinition]:
-        return list(self._definitions.values())
+    def definitions(self) -> tuple[ToolDefinition, ...]:
+        return tuple(self._definitions.values())
 
-    def provider_for(self, provider: str) -> ToolProvider:
-        provider = self._providers.get(provider)
+    def provider_for(self, provider_name: str) -> ToolProvider:
+        provider = self._providers.get(provider_name)
         if provider is None:
-            raise ToolNotFoundError(f"Unknown tool: {provider}")
+            raise ToolNotFoundError(f"Unknown provider: {provider_name}")
         return provider

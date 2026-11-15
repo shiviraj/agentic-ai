@@ -24,7 +24,7 @@ class Message(Aggregate[MessageId]):
         return Message.create(role=role, content=content, message_type=MessageType.TEXT)
 
     @classmethod
-    def create_tools(cls, tools: list[ToolCall]) -> "Message":
+    def create_tools(cls, tools: tuple[ToolCall, ...]) -> "Message":
         return Message.create(role=Role.ASSISTANT, content="", message_type=MessageType.TOOL_CALL, tool_calls=tools)
 
     @classmethod

@@ -1,12 +1,11 @@
-from typing import Any
+from collections.abc import Sequence
 
 from agent.domain.entity.message import Message
 from agent.domain.tool.tool import ToolDefinition
 from agent.domain.vo.message_type import MessageType
 
 
-def to_ollama_tools(definitions: list[ToolDefinition]) -> list[dict[str, Any]]:
-    """Our ToolDefinition -> the shape Ollama expects in its `tools` argument."""
+def to_ollama_tools(definitions: Sequence[ToolDefinition]) -> list[dict[str, object]]:
     return [
         {
             "type": "function",
@@ -20,14 +19,14 @@ def to_ollama_tools(definitions: list[ToolDefinition]) -> list[dict[str, Any]]:
     ]
 
 
-def to_ollama_payload(messages: list[Message]) -> list[dict]:
+def to_ollama_payload(messages: Sequence[Message]) -> list[dict[str, object]]:
     payload = []
 
     for message in messages:
         if message.message_type == MessageType.AGENT_RESPONSE:
             continue
 
-        item = {
+        item: dict[str, object] = {
             "role": message.role.value,
             "content": message.content or "",
         }
