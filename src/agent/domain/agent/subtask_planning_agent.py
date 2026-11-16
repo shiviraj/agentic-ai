@@ -1,9 +1,9 @@
 from abc import abstractmethod
 
-from agent.domain.aggregate.conversation import Conversation
-from agent.domain.vo.task_analysis import AnalysisResult
+from agent.domain.aggregate.execution_plan import ExecutionPlan
+from agent.domain.entity.message import Message
 
 
 class SubtaskPlanningAgent:
     @abstractmethod
-    def run(self, conversation: Conversation) -> AnalysisResult: ...
+    def execute(self, context: tuple[Message, ...]) -> ExecutionPlan: ...

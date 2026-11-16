@@ -1,7 +1,7 @@
 from agent.application.service.conversation_context_service import ConversationContextService
 from agent.application.service.conversation_service import ConversationService
 from agent.application.workflow.workflow_input import WorkflowInput
-from agent.domain.agent.conversation_agent import ConversationAgent
+from agent.domain.agent.response_agent import ResponseAgent
 from agent.domain.vo.chat_response import ChatResponse
 from agent.domain.vo.user_request import UserRequest
 from agent.shared.logger.logger import Logger
@@ -10,7 +10,7 @@ from agent.shared.logger.logger import Logger
 class ResponseService:
     def __init__(
         self,
-        agent: ConversationAgent,
+        agent: ResponseAgent,
         conversation_service: ConversationService,
         conversation_context_service: ConversationContextService,
     ):

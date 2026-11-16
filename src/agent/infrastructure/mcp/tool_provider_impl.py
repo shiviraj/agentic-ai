@@ -1,4 +1,4 @@
-from fastmcp import Client
+from typing import Any
 
 from agent.domain.tool.errors import ToolProviderError
 from agent.domain.tool.tool import ToolCall, ToolDefinition, ToolResult
@@ -6,7 +6,7 @@ from agent.domain.tool.tool_provider import ToolProvider
 
 
 class ToolProviderImpl(ToolProvider):
-    def __init__(self, client: Client, server_name: str) -> None:
+    def __init__(self, client: Any, server_name: str) -> None:
         self._client = client
         self._server_name = server_name
 

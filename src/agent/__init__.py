@@ -12,21 +12,26 @@ from rich.console import Console
 from agent.application.service.analysis_service import AnalysisService
 from agent.application.service.conversation_context_service import ConversationContextService
 from agent.application.service.conversation_service import ConversationService
+from agent.application.service.decomposition_service import DecompositionService
 from agent.application.service.engineer_service import EngineerService
 from agent.application.service.investigation_service import InvestigationService
 from agent.application.service.response_service import ResponseService
+from agent.application.service.subtask_planning_service import SubtaskPlanningService
 from agent.application.service.tool_executor import ToolExecutor
 from agent.application.workflow.conversation.conversation_workflow import ConversationWorkflow
 from agent.application.workflow.engineer.engineer_workflow import EngineerWorkflow
 from agent.application.workflow.query.query_workflow import QueryWorkflow
+from agent.application.workflow.subtask.execution_workflow import ExecutionWorkflow
 from agent.application.workflow.task.task_workflow import TaskWorkflow
 from agent.application.workflow.workflow_input import WorkflowInput
 from agent.application.workflow.workflow_registry import WorkflowRegistry
 from agent.domain.tool.tool_registry import ToolRegistry
 from agent.infrastructure.agents.analysis_agent_impl import AnalysisAgentImpl
-from agent.infrastructure.agents.conversation_agent_impl import ConversationAgentImpl
+from agent.infrastructure.agents.decomposition_agent_impl import DecompositionAgentImpl
 from agent.infrastructure.agents.engineer_agent_impl import EngineerAgentImpl
 from agent.infrastructure.agents.investigation_agent_impl import InvestigationAgentImpl
+from agent.infrastructure.agents.response_agent_impl import ResponseAgentImpl
+from agent.infrastructure.agents.subtask_planning_agent_impl import SubtaskPlanningAgentImpl
 from agent.infrastructure.llm.llm_client_impl import LLMClientImpl
 from agent.infrastructure.mcp.tool_provider_impl import ToolProviderImpl
 from agent.infrastructure.persistence.conversation_repository_impl import ConversationRepositoryImpl
@@ -72,7 +77,7 @@ async def main() -> None:
         tool_executor=tool_executor,
     )
     response_service = ResponseService(
-        agent=ConversationAgentImpl(llm_client=llm_client),
+        agent=ResponseAgentImpl(llm_client=llm_client),
         conversation_service=conversation_service,
         conversation_context_service=conversation_context_service,
     )
@@ -87,11 +92,28 @@ async def main() -> None:
         conversation_context_service=conversation_context_service,
         investigation_service=investigation_service,
     )
+    decomposition_service = DecompositionService(
+        agent=DecompositionAgentImpl(llm_client),
+        conversation_service=conversation_service,
+        conversation_context_service=conversation_context_service,
+    )
+
+    execution_workflow = ExecutionWorkflow(
+        subtask_planning_service=SubtaskPlanningService(
+            agent=SubtaskPlanningAgentImpl(llm_client),
+            conversation_service=conversation_service,
+            conversation_context_service=conversation_context_service,
+        )
+    )
 
     workflow_registry = WorkflowRegistry(
         conversation_workflow=ConversationWorkflow(),
         query_workflow=QueryWorkflow(investigation_service=investigation_service),
-        task_workflow=TaskWorkflow(analysis_service),
+        task_workflow=TaskWorkflow(
+            analysis_service=analysis_service,
+            decomposition_service=decomposition_service,
+            execution_workflow=execution_workflow,
+        ),
     )
 
     engineer_workflow = EngineerWorkflow(

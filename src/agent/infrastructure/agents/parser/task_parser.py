@@ -8,7 +8,7 @@ from agent.infrastructure.agents.parser.field_check import require_str
 from agent.infrastructure.agents.parser.output_parser import OutputParser
 
 
-class TaskDecompositionParser(OutputParser[Task]):
+class TaskParser(OutputParser[Task]):
     @property
     def schema(self) -> dict[str, Any]:
         return {

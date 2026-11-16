@@ -22,12 +22,11 @@ class Task(Aggregate[TaskId]):
     status: TaskStatus = TaskStatus.PENDING
 
     @classmethod
-    def create(
-        cls,
-        title: str,
-        description: str,
-        sub_tasks: tuple[Subtask, ...],
-    ) -> "Task":
+    def create(cls, title: str, description: str, sub_tasks: tuple[Subtask, ...]) -> "Task":
         return cls(
-            id=TaskId.generate(), title=title, description=description, sub_tasks=sub_tasks, status=TaskStatus.PENDING
+            id=TaskId.generate(),
+            title=title,
+            description=description,
+            sub_tasks=sub_tasks,
+            status=TaskStatus.PENDING,
         )
