@@ -1,6 +1,31 @@
 # TypeScript Developer Agent – Flowchart
 
 ```mermaid
+
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "background": "#F8FAFC",
+    "mainBkg": "#FFFFFF",
+    "primaryColor": "#FFFFFF",
+    "primaryTextColor": "#1E293B",
+    "primaryBorderColor": "#CBD5E1",
+    "lineColor": "#64748B",
+    "edgeLabelBackground": "#E2E8F0",
+    "secondaryColor": "#F1F5F9",
+    "tertiaryColor": "#F8FAFC",
+    "fontFamily": "Inter, Arial, sans-serif",
+    "fontSize": "14px"
+  },
+  "flowchart": {
+    "curve": "basis",
+    "nodeSpacing": 45,
+    "rankSpacing": 55,
+    "padding": 15,
+    "htmlLabels": true
+  }
+}}%%
+
 flowchart TD
     A([User prompt])
     G{validate user input}
@@ -83,4 +108,16 @@ flowchart TD
     B2 --> Z
     Z --> A
 
+    style B fill:#E8F3EE,stroke:#5A9B78,stroke-width:2px,color:#1F2937
+    style C fill:#FFF3E5,stroke:#D69A45,stroke-width:2px,color:#1F2937
+    style D fill:#F1ECF8,stroke:#9075B5,stroke-width:2px,color:#1F2937
+    style E fill:#FCECEE,stroke:#C87982,stroke-width:2px,color:#1F2937
+    style F fill:#EAF2F8,stroke:#5B8DB8,stroke-width:2px,color:#1F2937
+
+    style A fill:#DCFCE7,stroke:#16A34A,color:#166534,stroke-width:2px
+    style G fill:#DCFCE7,stroke:#16A34A,color:#166534,stroke-width:2px
+    style H fill:#DCFCE7,stroke:#16A34A,color:#166534,stroke-width:2px
+    style Z fill:#DCFCE7,stroke:#16A34A,color:#166534,stroke-width:2px
+
+    classDef default fill:#FFFFFF,stroke:#CBD5E1,stroke-width:1.5px,color:#1E293B
 ```
