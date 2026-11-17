@@ -1,7 +1,7 @@
 from agent.application.service.conversation_context_service import ConversationContextService
 from agent.application.service.conversation_service import ConversationService
 from agent.application.workflow.workflow_input import WorkflowInput
-from agent.domain.agent.subtask_planning_agent import SubtaskPlanningAgent
+from agent.domain.agent.agent import Agent
 from agent.domain.aggregate.execution_plan import ExecutionPlan
 from agent.domain.entity.subtask import Subtask
 from agent.domain.vo.user_request import UserRequest
@@ -11,7 +11,7 @@ from agent.shared.logger.logger import Logger
 class SubtaskPlanningService:
     def __init__(
         self,
-        agent: SubtaskPlanningAgent,
+        agent: Agent[ExecutionPlan],
         conversation_service: ConversationService,
         conversation_context_service: ConversationContextService,
     ) -> None:

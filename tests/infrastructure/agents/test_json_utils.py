@@ -1,5 +1,5 @@
 import pytest
-from agent.infrastructure.agents.json_utils import parse_json_object
+from agent.infrastructure.agent.json_utils import parse_json_object
 
 from agent.domain.errors import InvalidAgentResponseError
 

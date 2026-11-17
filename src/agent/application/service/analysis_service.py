@@ -1,7 +1,7 @@
 from agent.application.service.conversation_context_service import ConversationContextService
 from agent.application.service.conversation_service import ConversationService
 from agent.application.service.investigation_service import InvestigationService
-from agent.domain.agent.analysis_agent import AnalysisAgent
+from agent.domain.agent.agent import Agent
 from agent.domain.vo.conversation_id import ConversationId
 from agent.domain.vo.task_analysis import AnalysisResult, AnalysisStatus
 from agent.domain.vo.user_request import UserRequest
@@ -13,7 +13,7 @@ MAX_ITERATIONS = 10
 class AnalysisService:
     def __init__(
         self,
-        agent: AnalysisAgent,
+        agent: Agent[AnalysisResult],
         conversation_service: ConversationService,
         conversation_context_service: ConversationContextService,
         investigation_service: InvestigationService,
@@ -47,12 +47,12 @@ class AnalysisService:
 
     def _build_prompt(self, user_request: UserRequest) -> str:
         return f"""
-            You are an intelligent Task Agent for a TypeScript backend engineering team.
-            Your responsibility is to investigate user task request, create a summary and requirements.
+        You are an intelligent Task Agent for a TypeScript backend engineering team.
+        Your responsibility is to investigate user task request, create a summary and requirements.
 
-            list down all open questions in requirements if you are not sure and which is really
-            needed for task implementations
+        list down all open questions in requirements if you are not sure and which is really
+        needed for task implementations
 
-            User request:
-            {user_request.value}
-            """
+        User request:
+        {user_request.value}
+        """

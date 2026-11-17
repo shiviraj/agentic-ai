@@ -6,7 +6,7 @@ import pytest
 
 from agent.domain.errors import LlmUnavailableError
 from agent.domain.entity.message import Message, Role
-from agent.infrastructure.llm.llm_client_impl import LLMClientImpl
+from agent.infrastructure.llm.llm_client import LLMClientImpl
 
 
 class FakeOllama:

@@ -7,8 +7,9 @@ from agent.shared.domain.aggregate import Aggregate
 
 class ExecutionAgent(str, Enum):
     TEST_DESIGN = "TEST_DESIGN"
-    IMPLEMENTATION = "IMPLEMENTATION"
     TEST_VERIFICATION = "TEST_VERIFICATION"
+    IMPLEMENTATION = "IMPLEMENTATION"
+    CODE_REVIEW = "CODE_REVIEW"
 
 
 @dataclass(frozen=True)

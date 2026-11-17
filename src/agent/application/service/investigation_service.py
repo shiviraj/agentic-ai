@@ -1,7 +1,7 @@
 from agent.application.service.conversation_context_service import ConversationContextService
 from agent.application.service.conversation_service import ConversationService
 from agent.application.service.tool_executor import ToolExecutor
-from agent.domain.agent.investigation_agent import InvestigationAgent
+from agent.domain.agent.agent import Agent
 from agent.domain.tool.tool_registry import ToolRegistry
 from agent.domain.vo.chat_response import ChatResponse
 from agent.domain.vo.conversation_id import ConversationId
@@ -15,7 +15,7 @@ MAX_ITERATIONS = 10
 class InvestigationService:
     def __init__(
         self,
-        agent: InvestigationAgent,
+        agent: Agent[ChatResponse],
         conversation_service: ConversationService,
         conversation_context_service: ConversationContextService,
         tool_registry: ToolRegistry,
@@ -35,7 +35,7 @@ class InvestigationService:
         for _ in range(0, MAX_ITERATIONS):
             with self._logger.status(message="Investigating project..."):
                 context = self._conversation_context_service.get_context(conversation_id)
-                result = self._agent.execute(context, self._tool_registry.definitions())
+                result = self._agent.execute_tools(context, self._tool_registry.definitions())
             self._logger.debug(result)
             await self._handle_response(result, conversation_id)
             if result.finished:

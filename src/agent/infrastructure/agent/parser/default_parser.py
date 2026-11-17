@@ -3,8 +3,8 @@ from typing import Any
 
 from agent.domain.errors import InvalidAgentResponseError
 from agent.domain.vo.chat_response import ChatResponse
-from agent.infrastructure.agents.parser.field_check import require_str
-from agent.infrastructure.agents.parser.output_parser import OutputParser
+from agent.infrastructure.agent.parser.field_check import require_str
+from agent.infrastructure.agent.parser.output_parser import OutputParser
 
 
 class DefaultParser(OutputParser[ChatResponse]):

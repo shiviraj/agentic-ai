@@ -9,8 +9,8 @@ from agent.domain.vo.task_analysis import (
     OpenQuestionCategory,
     QuestionPriority,
 )
-from agent.infrastructure.agents.parser.field_check import require_str
-from agent.infrastructure.agents.parser.output_parser import OutputParser
+from agent.infrastructure.agent.parser.field_check import require_str
+from agent.infrastructure.agent.parser.output_parser import OutputParser
 
 
 class AnalysisResultParser(OutputParser[AnalysisResult]):

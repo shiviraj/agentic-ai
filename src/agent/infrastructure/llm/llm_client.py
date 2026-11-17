@@ -5,7 +5,6 @@ import httpx
 import ollama
 from ollama import Client as OllamaClient
 
-from agent.application.port.llm_client import LLMClient
 from agent.domain.entity.message import Message
 from agent.domain.errors import LlmUnavailableError
 from agent.domain.tool.tool import ToolCall, ToolDefinition
@@ -13,14 +12,8 @@ from agent.domain.vo.tool_response import ToolResponse
 from agent.infrastructure.llm.utils import to_ollama_payload, to_ollama_tools
 
 
-class LLMClientImpl(LLMClient):
-    def __init__(
-        self,
-        client: OllamaClient,
-        model: str,
-        num_ctx: int = 8192,
-        temperature: float = 0.2,
-    ) -> None:
+class LLMClient:
+    def __init__(self, client: OllamaClient, model: str, num_ctx: int = 8192, temperature: float = 0.2) -> None:
         self._model = model
         self._num_ctx = num_ctx
         self._temperature = temperature

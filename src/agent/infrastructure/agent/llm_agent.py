@@ -1,18 +1,18 @@
-from typing import TypeVar
+from typing import Generic, TypeVar
 
-from agent.application.port.llm_client import LLMClient
 from agent.domain.entity.message import Message
 from agent.domain.errors import InvalidAgentResponseError
 from agent.domain.tool.finish_tool_definition import FINISH_TOOL_DEFINITION
 from agent.domain.tool.tool import ToolDefinition
 from agent.domain.vo.role import Role
 from agent.domain.vo.tool_response import ToolResponse
-from agent.infrastructure.agents.parser.output_parser import OutputParser
+from agent.infrastructure.agent.parser.output_parser import OutputParser
+from agent.infrastructure.llm.llm_client import LLMClient
 
 T = TypeVar("T")
 
 
-class LLMAgent:
+class LLMAgent(Generic[T]):
     def __init__(self, llm: LLMClient, system_prompt: str, max_attempts: int = 5) -> None:
         if max_attempts < 1:
             raise ValueError("max_attempts must be at least 1")

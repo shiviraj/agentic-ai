@@ -1,8 +1,8 @@
 from agent.application.service.conversation_context_service import ConversationContextService
 from agent.application.service.conversation_service import ConversationService
 from agent.application.workflow.workflow_input import WorkflowInput
+from agent.domain.agent.agent import Agent
 from agent.domain.agent.dto.engineer_agent_result import EngineerAgentResult
-from agent.domain.agent.engineer_agent import EngineerAgent
 from agent.domain.vo.user_request import UserRequest
 from agent.shared.logger.logger import Logger
 
@@ -10,7 +10,7 @@ from agent.shared.logger.logger import Logger
 class EngineerService:
     def __init__(
         self,
-        agent: EngineerAgent,
+        agent: Agent[EngineerAgentResult],
         conversation_service: ConversationService,
         conversation_context_service: ConversationContextService,
     ):

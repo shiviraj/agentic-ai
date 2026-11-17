@@ -1,7 +1,7 @@
 from agent.application.service.conversation_context_service import ConversationContextService
 from agent.application.service.conversation_service import ConversationService
 from agent.application.workflow.workflow_input import WorkflowInput
-from agent.domain.agent.decomposition_agent import DecompositionAgent
+from agent.domain.agent.agent import Agent
 from agent.domain.aggregate.task import Task
 from agent.domain.vo.user_request import UserRequest
 from agent.shared.logger.logger import Logger
@@ -10,7 +10,7 @@ from agent.shared.logger.logger import Logger
 class DecompositionService:
     def __init__(
         self,
-        agent: DecompositionAgent,
+        agent: Agent[Task],
         conversation_service: ConversationService,
         conversation_context_service: ConversationContextService,
     ) -> None:

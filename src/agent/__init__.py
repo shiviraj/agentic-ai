@@ -14,6 +14,11 @@ from agent.application.service.conversation_context_service import ConversationC
 from agent.application.service.conversation_service import ConversationService
 from agent.application.service.decomposition_service import DecompositionService
 from agent.application.service.engineer_service import EngineerService
+from agent.application.service.execution.code_review_execution import CodeReviewExecution
+from agent.application.service.execution.execution_registry import ExecutionRegistry
+from agent.application.service.execution.implementation_execution import ImplementationExecution
+from agent.application.service.execution.test_design_execution import TestDesignExecution
+from agent.application.service.execution.test_verification_execution import TestVerificationExecution
 from agent.application.service.investigation_service import InvestigationService
 from agent.application.service.response_service import ResponseService
 from agent.application.service.subtask_planning_service import SubtaskPlanningService
@@ -21,18 +26,18 @@ from agent.application.service.tool_executor import ToolExecutor
 from agent.application.workflow.conversation.conversation_workflow import ConversationWorkflow
 from agent.application.workflow.engineer.engineer_workflow import EngineerWorkflow
 from agent.application.workflow.query.query_workflow import QueryWorkflow
-from agent.application.workflow.subtask.execution_workflow import ExecutionWorkflow
+from agent.application.workflow.subtask.subtask_workflow import SubtaskWorkflow
 from agent.application.workflow.task.task_workflow import TaskWorkflow
 from agent.application.workflow.workflow_input import WorkflowInput
 from agent.application.workflow.workflow_registry import WorkflowRegistry
 from agent.domain.tool.tool_registry import ToolRegistry
-from agent.infrastructure.agents.analysis_agent_impl import AnalysisAgentImpl
-from agent.infrastructure.agents.decomposition_agent_impl import DecompositionAgentImpl
-from agent.infrastructure.agents.engineer_agent_impl import EngineerAgentImpl
-from agent.infrastructure.agents.investigation_agent_impl import InvestigationAgentImpl
-from agent.infrastructure.agents.response_agent_impl import ResponseAgentImpl
-from agent.infrastructure.agents.subtask_planning_agent_impl import SubtaskPlanningAgentImpl
-from agent.infrastructure.llm.llm_client_impl import LLMClientImpl
+from agent.infrastructure.agent.agent_impl import AgentImpl
+from agent.infrastructure.agent.parser.analysis_result_parser import AnalysisResultParser
+from agent.infrastructure.agent.parser.default_parser import DefaultParser
+from agent.infrastructure.agent.parser.engineer_agent_result_parser import EngineerAgentResultParser
+from agent.infrastructure.agent.parser.execution_plan_parser import ExecutionPlanParser
+from agent.infrastructure.agent.parser.task_parser import TaskParser
+from agent.infrastructure.llm.llm_client import LLMClient
 from agent.infrastructure.mcp.tool_provider_impl import ToolProviderImpl
 from agent.infrastructure.persistence.conversation_repository_impl import ConversationRepositoryImpl
 from agent.infrastructure.prompts.prompt_loader import load_prompt
@@ -48,7 +53,7 @@ async def main() -> None:
     timeout = int(os.getenv("TIMEOUT", "60"))
 
     ollama_client = OllamaClient(host=host, timeout=timeout)
-    llm_client = LLMClientImpl(client=ollama_client, model=model)
+    llm_client = LLMClient(client=ollama_client, model=model)
 
     session: PromptSession[str] = create_prompt_session()
     console = Console()
@@ -70,40 +75,70 @@ async def main() -> None:
     conversation = conversation_service.create()
 
     investigation_service = InvestigationService(
-        agent=InvestigationAgentImpl(llm_client=llm_client),
+        agent=AgentImpl(llm_client, "investigation_agent", DefaultParser()),
         conversation_service=conversation_service,
         conversation_context_service=conversation_context_service,
         tool_registry=tool_registry,
         tool_executor=tool_executor,
     )
     response_service = ResponseService(
-        agent=ResponseAgentImpl(llm_client=llm_client),
+        agent=AgentImpl(llm_client, "response_agent", DefaultParser()),
         conversation_service=conversation_service,
         conversation_context_service=conversation_context_service,
     )
     engineer_service = EngineerService(
-        agent=EngineerAgentImpl(llm_client=llm_client),
+        agent=AgentImpl(llm_client, "engineer_agent", EngineerAgentResultParser()),
         conversation_service=conversation_service,
         conversation_context_service=conversation_context_service,
     )
     analysis_service = AnalysisService(
-        agent=AnalysisAgentImpl(llm_client=llm_client),
+        agent=AgentImpl(llm_client, "analysis_agent", AnalysisResultParser()),
         conversation_service=conversation_service,
         conversation_context_service=conversation_context_service,
         investigation_service=investigation_service,
     )
     decomposition_service = DecompositionService(
-        agent=DecompositionAgentImpl(llm_client),
+        agent=AgentImpl(llm_client, "decomposition_agent", TaskParser()),
         conversation_service=conversation_service,
         conversation_context_service=conversation_context_service,
     )
 
-    execution_workflow = ExecutionWorkflow(
+    execution_workflow = SubtaskWorkflow(
         subtask_planning_service=SubtaskPlanningService(
-            agent=SubtaskPlanningAgentImpl(llm_client),
+            agent=AgentImpl(llm_client, "subtask_planning_agent", ExecutionPlanParser()),
             conversation_service=conversation_service,
             conversation_context_service=conversation_context_service,
-        )
+        ),
+        execution_registry=ExecutionRegistry(
+            code_review_execution=CodeReviewExecution(
+                agent=AgentImpl(llm_client, "code_review_agent", DefaultParser()),
+                conversation_service=conversation_service,
+                conversation_context_service=conversation_context_service,
+                tool_executor=tool_executor,
+                tool_registry=tool_registry,
+            ),
+            implementation_execution=ImplementationExecution(
+                agent=AgentImpl(llm_client, "implementation_agent", DefaultParser()),
+                conversation_service=conversation_service,
+                conversation_context_service=conversation_context_service,
+                tool_executor=tool_executor,
+                tool_registry=tool_registry,
+            ),
+            test_design_execution=TestDesignExecution(
+                agent=AgentImpl(llm_client, "test_design_agent", DefaultParser()),
+                conversation_service=conversation_service,
+                conversation_context_service=conversation_context_service,
+                tool_executor=tool_executor,
+                tool_registry=tool_registry,
+            ),
+            test_verification_execution=TestVerificationExecution(
+                agent=AgentImpl(llm_client, "test_verification_agent", DefaultParser()),
+                conversation_service=conversation_service,
+                conversation_context_service=conversation_context_service,
+                tool_executor=tool_executor,
+                tool_registry=tool_registry,
+            ),
+        ),
     )
 
     workflow_registry = WorkflowRegistry(
@@ -112,7 +147,7 @@ async def main() -> None:
         task_workflow=TaskWorkflow(
             analysis_service=analysis_service,
             decomposition_service=decomposition_service,
-            execution_workflow=execution_workflow,
+            subtask_workflow=execution_workflow,
         ),
     )
 
