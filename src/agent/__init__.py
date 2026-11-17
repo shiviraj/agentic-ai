@@ -59,14 +59,19 @@ async def main() -> None:
     console = Console()
     console.print(f"[cyan]{load_prompt('instruction')}[/cyan]")
 
-    mcp_client = MCPClient(pathlib.Path("src/agent/infrastructure/mcp/server/filesystem_server.py"))
     exit_stack = AsyncExitStack()
-    await exit_stack.enter_async_context(mcp_client)
+
+    command_mcp_client = MCPClient(pathlib.Path("src/agent/infrastructure/mcp/server/filesystem_server.py"))
+    await exit_stack.enter_async_context(command_mcp_client)
+    filesystem_provider = ToolProviderImpl(client=command_mcp_client, server_name="filesystem")
+
+    command_mcp_client = MCPClient(pathlib.Path("src/agent/infrastructure/mcp/server/command_server.py"))
+    await exit_stack.enter_async_context(command_mcp_client)
+    command_provider = ToolProviderImpl(client=command_mcp_client, server_name="command")
 
     tool_registry = ToolRegistry()
-    provider = ToolProviderImpl(client=mcp_client, server_name="filesystem")
-
-    await tool_registry.register_provider(provider=provider)
+    await tool_registry.register_provider(provider=filesystem_provider)
+    await tool_registry.register_provider(provider=command_provider)
     tool_executor = ToolExecutor(registry=tool_registry)
 
     conversation_repository = ConversationRepositoryImpl()

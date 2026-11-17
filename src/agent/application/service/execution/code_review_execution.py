@@ -37,7 +37,7 @@ class CodeReviewExecution(Execution):
         summary = "Error: Unable to investigate project"
 
         for _ in range(0, MAX_ITERATIONS):
-            with self._logger.status(message="Investigating project..."):
+            with self._logger.status(message="Reviewing code..."):
                 context = self._conversation_context_service.get_context(data.conversation_id)
                 result = self._agent.execute_tools(context, self._tool_registry.definitions())
             self._logger.debug(result)
@@ -48,7 +48,7 @@ class CodeReviewExecution(Execution):
 
         self._conversation_service.add_assistant_message(data.conversation_id, summary)
         self._logger.debug(summary)
-        self._logger.info("Successfully completed investigation")
+        self._logger.info("Successfully reviewed code")
         return ExecutionResult(summary)
 
     async def _handle_response(self, result: ToolResponse, conversation_id: ConversationId) -> None:
